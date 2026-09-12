@@ -3,11 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magello Cafe - Self Order</title>
+    <title>Order - Magello Cafe</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="flex h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="{{ route('home') }}" class="text-2xl font-bold text-orange-600">Magello</a>
+                </div>
+                <div>
+                    <a href="{{ route('home') }}" class="text-gray-600 hover:text-orange-600 text-sm font-medium">
+                        Kembali ke Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-4rem)]">
         <!-- Main Content - Menu Items -->
         <div class="flex-1 p-6 overflow-y-auto">
             <div class="max-w-6xl mx-auto">
@@ -17,33 +33,41 @@
                     <p class="text-gray-600">Silakan pilih menu yang Anda inginkan</p>
                 </div>
 
-                <!-- Table Selection -->
-                @if(!$tableId)
-                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h2 class="text-xl font-semibold mb-4">Pilih Meja</h2>
-                    <form action="{{ route('order.set-table') }}" method="POST">
-                        @csrf
-                        <div class="flex gap-4">
-                            <input type="text" name="table_number" placeholder="Nomor Meja" 
-                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                            <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
-                                Pilih Meja
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                @else
+                <!-- Table Info -->
+                @if($tableId)
                 @php
                     $table = \App\Models\RestaurantTable::find($tableId);
                 @endphp
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-                    <span class="font-semibold">Meja Terpilih:</span> {{ $table ? $table->table_number : $tableId }}
+                <div class="bg-orange-100 border-l-4 border-orange-500 p-4 mb-6 rounded-r-lg">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <div>
+                            <p class="font-bold text-orange-800">Order Meja {{ $table ? $table->table_number : $tableId }}</p>
+                            <p class="text-orange-600 text-sm">Pesanan dine-in</p>
+                        </div>
+                    </div>
+                </div>
+                @else
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 rounded-r-lg">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <p class="font-bold text-yellow-800">Belum ada meja terpilih</p>
+                            <p class="text-yellow-600 text-sm">
+                                <a href="{{ route('order.select-table') }}" class="underline">Pilih meja</a> atau scan QR code
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 @endif
 
                 <!-- Category Filter -->
                 <div class="flex gap-2 mb-6 flex-wrap">
-                    <button class="px-4 py-2 bg-blue-500 text-white rounded-full font-medium">Semua</button>
+                    <button class="px-4 py-2 bg-orange-500 text-white rounded-full font-medium">Semua</button>
                     <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Kopi</button>
                     <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Non-Kopi</button>
                     <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Makanan</button>
@@ -134,17 +158,23 @@
             </div>
 
             <!-- Checkout Button -->
+            @if($tableId)
             <form action="{{ route('order.store') }}" method="POST">
                 @csrf
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-medium mb-2">Nama Pelanggan (Opsional)</label>
                     <input type="text" name="customer_name" placeholder="Masukkan nama Anda"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
                 </div>
-                <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition">
+                <button type="submit" class="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition">
                     Lanjut ke Pembayaran
                 </button>
             </form>
+            @else
+            <a href="{{ route('order.select-table') }}" class="block w-full bg-gray-400 text-white py-3 rounded-lg font-semibold text-center cursor-not-allowed">
+                Pilih Meja Terlebih Dahulu
+            </a>
+            @endif
             @endif
         </div>
     </div>

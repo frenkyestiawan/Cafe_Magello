@@ -24,6 +24,24 @@ class OrderController extends Controller
         return view('order.index', compact('menus', 'categories', 'cart', 'subtotal', 'tableId'));
     }
 
+    public function selectTable()
+    {
+        return view('order.select-table');
+    }
+
+    public function orderWithTable($tableNumber)
+    {
+        $table = RestaurantTable::where('table_number', $tableNumber)->first();
+
+        if (!$table) {
+            return redirect()->route('order.select-table')->with('error', 'Meja tidak ditemukan');
+        }
+
+        session(['table_id' => $table->id]);
+
+        return redirect()->route('order.index')->with('success', 'Meja ' . $tableNumber . ' berhasil dipilih');
+    }
+
     public function addToCart(Request $request)
     {
         $menuId = $request->input('menu_id');

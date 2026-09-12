@@ -6,8 +6,25 @@
     <title>Order {{ $order->order_code }} - Magello Cafe</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="{{ route('home') }}" class="text-2xl font-bold text-orange-600">Magello</a>
+                </div>
+                <div>
+                    <a href="{{ route('home') }}" class="text-gray-600 hover:text-orange-600 text-sm font-medium">
+                        Kembali ke Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex items-center justify-center p-4 min-h-[calc(100vh-4rem)]">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
         <!-- Order Header -->
         <div class="text-center mb-6 border-b-2 border-gray-200 pb-4">
             <h1 class="text-2xl font-bold text-gray-800">ORDER #{{ $order->order_code }}</h1>
@@ -42,7 +59,7 @@
         <!-- Total -->
         <div class="flex justify-between items-center text-xl font-bold mb-6">
             <span>Total</span>
-            <span class="text-blue-600">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
+            <span class="text-orange-600">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
         </div>
 
         <!-- Order Status -->
@@ -73,16 +90,17 @@
             <a href="{{ route('order.index') }}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-center">
                 Pesanan Baru
             </a>
-            <button onclick="window.print()" class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition">
+            <button onclick="window.print()" class="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition">
                 Cetak Struk
             </button>
         </div>
-    </div>
+        </div>
 
     @if(session('success'))
     <div class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
         {{ session('success') }}
     </div>
     @endif
+    </div>
 </body>
 </html>
