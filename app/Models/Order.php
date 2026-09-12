@@ -12,6 +12,7 @@ class Order extends Model
         'restaurant_table_id',
         'order_code',
         'customer_name',
+        'customer_phone',
         'status',
         'total_amount',
         'payment_status',

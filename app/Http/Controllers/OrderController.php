@@ -42,6 +42,26 @@ class OrderController extends Controller
         return redirect()->route('order.index')->with('success', 'Meja ' . $tableNumber . ' berhasil dipilih');
     }
 
+    public function checkout()
+    {
+        $cart = session('cart', []);
+
+        if (empty($cart)) {
+            return redirect()->route('order.index')->with('error', 'Keranjang kosong');
+        }
+
+        $tableId = session('table_id');
+        if (!$tableId) {
+            return redirect()->route('order.select-table')->with('error', 'Silakan pilih meja terlebih dahulu');
+        }
+
+        $subtotal = collect($cart)->sum(function ($item) {
+            return $item['price'] * $item['quantity'];
+        });
+
+        return view('order.checkout', compact('cart', 'subtotal'));
+    }
+
     public function addToCart(Request $request)
     {
         $menuId = $request->input('menu_id');
@@ -120,6 +140,11 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Silakan pilih meja terlebih dahulu');
         }
 
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'required|string|regex:/^[0-9]{10,13}$/',
+        ]);
+
         $orderCode = 'ORD' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT);
 
         $totalAmount = collect($cart)->sum(function ($item) {
@@ -129,7 +154,8 @@ class OrderController extends Controller
         $order = Order::create([
             'restaurant_table_id' => $tableId,
             'order_code' => $orderCode,
-            'customer_name' => $request->input('customer_name'),
+            'customer_name' => $validated['customer_name'],
+            'customer_phone' => $validated['customer_phone'],
             'status' => 'pending',
             'total_amount' => $totalAmount,
             'payment_status' => 'unpaid',

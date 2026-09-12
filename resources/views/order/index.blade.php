@@ -67,17 +67,17 @@
 
                 <!-- Category Filter -->
                 <div class="flex gap-2 mb-6 flex-wrap">
-                    <button class="px-4 py-2 bg-orange-500 text-white rounded-full font-medium">Semua</button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Kopi</button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Non-Kopi</button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Makanan</button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100">Camilan</button>
+                    <button onclick="filterMenu('all')" class="category-btn px-4 py-2 bg-orange-500 text-white rounded-full font-medium" data-category="all">Semua</button>
+                    <button onclick="filterMenu(1)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="1">Kopi</button>
+                    <button onclick="filterMenu(2)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="2">Non-Kopi</button>
+                    <button onclick="filterMenu(3)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="3">Makanan</button>
+                    <button onclick="filterMenu(4)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="4">Camilan</button>
                 </div>
 
                 <!-- Menu Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($menus as $menu)
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+                    <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition" data-category="{{ $menu->category_id }}">
                         <div class="h-48 bg-gray-200 flex items-center justify-center">
                             <span class="text-gray-400">Image</span>
                         </div>
@@ -85,11 +85,11 @@
                             <h3 class="font-semibold text-lg mb-2">{{ $menu->name }}</h3>
                             <p class="text-gray-600 text-sm mb-3">{{ $menu->description ?? 'Tidak ada deskripsi' }}</p>
                             <div class="flex justify-between items-center">
-                                <span class="text-xl font-bold text-blue-600">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
+                                <span class="text-xl font-bold text-orange-600">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
                                 <form action="{{ route('order.add-to-cart') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="menu_id" value="{{ $menu->id }}">
-                                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                    <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
                                         + Tambah
                                     </button>
                                 </form>
@@ -159,17 +159,15 @@
 
             <!-- Checkout Button -->
             @if($tableId)
-            <form action="{{ route('order.store') }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-medium mb-2">Nama Pelanggan (Opsional)</label>
-                    <input type="text" name="customer_name" placeholder="Masukkan nama Anda"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-                <button type="submit" class="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition">
-                    Lanjut ke Pembayaran
-                </button>
-            </form>
+            @if(!empty($cart))
+            <a href="{{ route('order.checkout') }}" class="block w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition text-center">
+                Lanjut ke Pembayaran
+            </a>
+            @else
+            <div class="block w-full bg-gray-400 text-white py-3 rounded-lg font-semibold text-center cursor-not-allowed">
+                Keranjang Kosong
+            </div>
+            @endif
             @else
             <a href="{{ route('order.select-table') }}" class="block w-full bg-gray-400 text-white py-3 rounded-lg font-semibold text-center cursor-not-allowed">
                 Pilih Meja Terlebih Dahulu
@@ -190,5 +188,29 @@
         {{ session('error') }}
     </div>
     @endif
+
+    <script>
+        function filterMenu(category) {
+            // Update button styles
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.dataset.category == category || (category === 'all' && btn.dataset.category === 'all')) {
+                    btn.classList.remove('bg-white', 'text-gray-700');
+                    btn.classList.add('bg-orange-500', 'text-white');
+                } else {
+                    btn.classList.remove('bg-orange-500', 'text-white');
+                    btn.classList.add('bg-white', 'text-gray-700');
+                }
+            });
+
+            // Filter menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                if (category === 'all' || item.dataset.category == category) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+    </script>
 </body>
 </html>

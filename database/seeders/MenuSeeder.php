@@ -14,6 +14,7 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         $menus = [
+            // Kopi (category_id: 1)
             [
                 'name' => 'Kopi Susu Gula Aren',
                 'price' => 25000,
@@ -22,12 +23,65 @@ class MenuSeeder extends Seeder
                 'is_available' => true,
             ],
             [
+                'name' => 'Americano',
+                'price' => 20000,
+                'category_id' => 1,
+                'description' => 'Kopi hitam Americano',
+                'is_available' => true,
+            ],
+            [
+                'name' => 'Latte',
+                'price' => 28000,
+                'category_id' => 1,
+                'description' => 'Latte dengan susu segar',
+                'is_available' => true,
+            ],
+            [
+                'name' => 'Cappuccino',
+                'price' => 30000,
+                'category_id' => 1,
+                'description' => 'Cappuccino creamy',
+                'is_available' => true,
+            ],
+            [
+                'name' => 'Espresso',
+                'price' => 18000,
+                'category_id' => 1,
+                'description' => 'Espresso strong',
+                'is_available' => true,
+            ],
+
+            // Non-Kopi (category_id: 2)
+            [
                 'name' => 'Es Teh Manis',
                 'price' => 10000,
                 'category_id' => 2,
                 'description' => 'Teh manis dingin segar',
                 'is_available' => true,
             ],
+            [
+                'name' => 'Lemon Tea',
+                'price' => 12000,
+                'category_id' => 2,
+                'description' => 'Teh lemon segar',
+                'is_available' => true,
+            ],
+            [
+                'name' => 'Jus Jeruk',
+                'price' => 15000,
+                'category_id' => 2,
+                'description' => 'Jus jeruk segar',
+                'is_available' => true,
+            ],
+            [
+                'name' => 'Matcha Latte',
+                'price' => 25000,
+                'category_id' => 2,
+                'description' => 'Matcha latte creamy',
+                'is_available' => true,
+            ],
+
+            // Makanan (category_id: 3)
             [
                 'name' => 'Nasi Goreng',
                 'price' => 35000,
@@ -43,6 +97,22 @@ class MenuSeeder extends Seeder
                 'is_available' => true,
             ],
             [
+                'name' => 'Spaghetti',
+                'price' => 40000,
+                'category_id' => 3,
+                'description' => 'Spaghetti bolognese',
+                'is_available' => true,
+            ],
+            [
+                'name' => 'Nasi Campur',
+                'price' => 32000,
+                'category_id' => 3,
+                'description' => 'Nasi campur lengkap',
+                'is_available' => true,
+            ],
+
+            // Camilan (category_id: 4)
+            [
                 'name' => 'Dimsum',
                 'price' => 15000,
                 'category_id' => 4,
@@ -57,17 +127,17 @@ class MenuSeeder extends Seeder
                 'is_available' => true,
             ],
             [
-                'name' => 'Americano',
-                'price' => 20000,
-                'category_id' => 1,
-                'description' => 'Kopi hitam Americano',
+                'name' => 'Roti Bakar',
+                'price' => 18000,
+                'category_id' => 4,
+                'description' => 'Roti bakar dengan topping',
                 'is_available' => true,
             ],
             [
-                'name' => 'Latte',
-                'price' => 28000,
-                'category_id' => 1,
-                'description' => 'Latte dengan susu segar',
+                'name' => 'Pisang Goreng',
+                'price' => 15000,
+                'category_id' => 4,
+                'description' => 'Pisang goreng crispy',
                 'is_available' => true,
             ],
         ];

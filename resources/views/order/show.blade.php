@@ -24,9 +24,9 @@
     </nav>
 
     <div class="flex items-center justify-center p-4 min-h-[calc(100vh-4rem)]">
-        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full" style="font-family: 'Courier New', monospace;">
         <!-- Order Header -->
-        <div class="text-center mb-6 border-b-2 border-gray-200 pb-4">
+        <div class="text-center mb-6 border-b-2 border-dashed border-gray-300 pb-4">
             <h1 class="text-2xl font-bold text-gray-800">ORDER #{{ $order->order_code }}</h1>
             <p class="text-gray-600 mt-2">Meja {{ $order->restaurantTable->table_number ?? '-' }}</p>
             <p class="text-sm text-gray-500 mt-1">{{ $order->created_at->format('d/m/Y H:i') }}</p>
@@ -35,12 +35,14 @@
         <!-- Order Items -->
         <div class="mb-6">
             @foreach($order->orderDetails as $detail)
-            <div class="flex justify-between items-start mb-3">
+            <div class="flex justify-between items-start mb-2">
                 <div class="flex-1">
-                    <p class="font-medium text-gray-800">{{ $detail->menu->name }}</p>
-                    @if($detail->level)
-                    <p class="text-sm text-gray-500">Level {{ $detail->level }}</p>
-                    @endif
+                    <p class="font-medium text-gray-800">
+                        {{ $detail->menu->name }}
+                        @if($detail->level)
+                        <span class="text-sm text-gray-500"> Level {{ $detail->level }}</span>
+                        @endif
+                    </p>
                     @if($detail->notes)
                     <p class="text-sm text-gray-500 italic">{{ $detail->notes }}</p>
                     @endif
@@ -54,13 +56,31 @@
         </div>
 
         <!-- Divider -->
-        <div class="border-t border-gray-300 my-4"></div>
+        <div class="border-t-2 border-dashed border-gray-300 my-4"></div>
 
         <!-- Total -->
         <div class="flex justify-between items-center text-xl font-bold mb-6">
             <span>Total</span>
             <span class="text-orange-600">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
         </div>
+
+        <!-- Customer Info -->
+        @if($order->customer_name || $order->customer_phone)
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            @if($order->customer_name)
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">Nama:</span>
+                <span class="text-gray-800">{{ $order->customer_name }}</span>
+            </div>
+            @endif
+            @if($order->customer_phone)
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-600">No HP:</span>
+                <span class="text-gray-800">{{ $order->customer_phone }}</span>
+            </div>
+            @endif
+        </div>
+        @endif
 
         <!-- Order Status -->
         <div class="space-y-2 mb-6">
@@ -77,13 +97,6 @@
                 </span>
             </div>
         </div>
-
-        <!-- Customer Name -->
-        @if($order->customer_name)
-        <div class="text-center text-gray-600 mb-6">
-            <p>Pelanggan: {{ $order->customer_name }}</p>
-        </div>
-        @endif
 
         <!-- Actions -->
         <div class="flex gap-4">
