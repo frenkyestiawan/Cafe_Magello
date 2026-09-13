@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 
 Route::get('/', function () {
     return view('home');
@@ -17,6 +18,9 @@ Route::get('/order/remove-from-cart/{menuId}', [OrderController::class, 'removeF
 Route::get('/order/{id}', [OrderController::class, 'show'])->name('order.show');
 Route::post('/order', [OrderController::class, 'store'])->name('order.store');
 Route::post('/order/set-table', [OrderController::class, 'setTable'])->name('order.set-table');
+
+Route::get('/payment/{orderId}', [PaymentController::class, 'showPayment'])->name('payment.show');
+Route::post('/payment/check-status/{orderId}', [PaymentController::class, 'checkStatus'])->name('payment.check-status');
 
 Route::get('/login', function () {
     return 'Halaman Login Admin (akan dibuat nanti)';

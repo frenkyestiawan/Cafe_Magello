@@ -100,9 +100,15 @@
 
         <!-- Actions -->
         <div class="flex gap-4">
+            @if($order->payment_status === 'unpaid')
+            <a href="{{ route('payment.show', $order->id) }}" class="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition text-center">
+                Bayar Sekarang
+            </a>
+            @else
             <a href="{{ route('order.index') }}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-center">
                 Pesanan Baru
             </a>
+            @endif
             <button onclick="window.print()" class="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition">
                 Cetak Struk
             </button>

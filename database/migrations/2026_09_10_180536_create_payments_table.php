@@ -15,11 +15,13 @@ return new class extends Migration
                 ->constrained('orders')
                 ->cascadeOnDelete();
 
-            $table->enum('method', [
-                'qris'
-            ]);
-
             $table->decimal('amount', 12, 2);
+
+            $table->string('payment_method')->default('qris');
+
+            $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
+
+            $table->string('transaction_id')->nullable();
 
             $table->timestamp('paid_at')->nullable();
 

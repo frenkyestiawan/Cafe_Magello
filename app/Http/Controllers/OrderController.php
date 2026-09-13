@@ -175,7 +175,7 @@ class OrderController extends Controller
 
         session(['cart' => []]);
 
-        return redirect()->route('order.show', $order->id)->with('success', 'Pesanan berhasil dibuat');
+        return redirect()->route('payment.show', $order->id)->with('success', 'Pesanan berhasil dibuat');
     }
 
     public function setTable(Request $request)
