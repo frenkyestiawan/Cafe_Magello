@@ -16,6 +16,7 @@ class Order extends Model
         'status',
         'total_amount',
         'payment_status',
+        'user_id',
     ];
 
     public function orderDetails(): HasMany
@@ -31,5 +32,10 @@ class Order extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

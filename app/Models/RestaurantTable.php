@@ -11,6 +11,7 @@ class RestaurantTable extends Model
         'table_number',
         'capacity',
         'is_available',
+        'qr_code',
     ];
 
     public function orders(): HasMany
