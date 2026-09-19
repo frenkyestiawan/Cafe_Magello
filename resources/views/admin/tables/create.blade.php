@@ -1,0 +1,65 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Tambah Meja')
+@section('page-title', 'Tambah Meja')
+
+@section('content')
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-6">
+        <a href="{{ route('admin.tables.index') }}" class="text-blue-600 hover:text-blue-900">
+            <i class="fas fa-arrow-left mr-2"></i>Kembali ke Daftar Meja
+        </a>
+    </div>
+    
+    <form action="{{ route('admin.tables.store') }}" method="POST">
+        @csrf
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <div class="mb-4">
+                    <label for="table_number" class="block text-gray-700 font-medium mb-2">Nomor Meja</label>
+                    <input type="text" id="table_number" name="table_number" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="{{ old('table_number') }}">
+                    @error('table_number')
+                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                
+                <div class="mb-4">
+                    <label for="capacity" class="block text-gray-700 font-medium mb-2">Kapasitas (orang)</label>
+                    <input type="number" id="capacity" name="capacity" required min="1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="{{ old('capacity', 4) }}">
+                    @error('capacity')
+                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+            
+            <div>
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="is_available" class="mr-2"
+                               {{ old('is_available', true) ? 'checked' : '' }}>
+                        <span class="text-gray-700">Tersedia</span>
+                    </label>
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        QR Code akan otomatis dibuat saat meja ditambahkan. QR Code akan mengarah ke halaman pemesanan untuk meja ini.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                <i class="fas fa-save mr-2"></i>Simpan Meja
+            </button>
+        </div>
+    </form>
+</div>
+@endsection

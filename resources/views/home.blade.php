@@ -15,7 +15,7 @@
                     <h1 class="text-2xl font-bold text-orange-600">Magello</h1>
                 </div>
                 <div>
-                    <a href="{{ route('login') }}" class="text-gray-600 hover:text-orange-600 text-sm font-medium">
+                    <a href="{{ route('admin.login') }}" class="text-gray-600 hover:text-orange-600 text-sm font-medium">
                         Login Admin
                     </a>
                 </div>
