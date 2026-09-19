@@ -33,15 +33,42 @@
             </div>
             
             <div class="bg-gray-50 p-4 rounded">
+                <h4 class="font-semibold text-gray-800 mb-3">QR Code</h4>
+                @if($table->qr_code)
+                    <div class="text-center">
+                        <img src="{{ $table->qr_code }}" alt="QR Code" class="mx-auto mb-4 border rounded-lg">
+                        <p class="text-sm text-gray-500 mb-4">QR Code untuk meja #{{ $table->table_number }}</p>
+                        
+                        <div class="space-x-2">
+                            <form action="{{ route('admin.tables.regenerate-qr', $table->id) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
+                                    <i class="fas fa-sync-alt mr-2"></i>Perbarui QR Code
+                                </button>
+                            </form>
+                            
+                            <a href="{{ $table->qr_code }}" download="qr_code_{{ $table->table_number }}.png" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 inline-block">
+                                <i class="fas fa-download mr-2"></i>Download QR Code
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-red-600">QR Code belum dibuat.</p>
+                    <form action="{{ route('admin.tables.regenerate-qr', $table->id) }}" method="POST" class="mt-4">
+                        @csrf
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            <i class="fas fa-qrcode mr-2"></i>Buat QR Code
+                        </button>
+                    </form>
+                @endif
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded mt-4">
                 <h4 class="font-semibold text-gray-800 mb-3">URL Pemesanan</h4>
                 <p class="text-sm text-gray-600 mb-2">Pelanggan dapat mengakses pemesanan melalui:</p>
                 <div class="bg-white p-3 rounded border">
                     <code class="text-sm">{{ url('/order/table/' . $table->table_number) }}</code>
                 </div>
-                <p class="text-xs text-gray-500 mt-2">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Fitur QR Code sedang dalam perbaikan. Gunakan URL di atas untuk pemesanan.
-                </p>
             </div>
         </div>
         

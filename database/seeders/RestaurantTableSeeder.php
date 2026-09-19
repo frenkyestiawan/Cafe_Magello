@@ -22,8 +22,18 @@ class RestaurantTableSeeder extends Seeder
             ['table_number' => '06', 'capacity' => 6, 'is_available' => true],
         ];
 
-        foreach ($tables as $table) {
-            RestaurantTable::create($table);
+        foreach ($tables as $tableData) {
+            $createdTable = RestaurantTable::create($tableData);
+            
+            // Generate QR Code URL
+            $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $createdTable->table_number;
+            $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
+            
+            // Update with QR Code
+            $createdTable->qr_code = $qrCodeApiUrl;
+            $createdTable->save();
+            
+            echo "Meja {$createdTable->table_number} - QR Code: {$qrCodeApiUrl}\n";
         }
     }
 }

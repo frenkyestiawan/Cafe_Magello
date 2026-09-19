@@ -18,9 +18,15 @@
             <div>
                 <div class="mb-4">
                     <label for="table_number" class="block text-gray-700 font-medium mb-2">Nomor Meja</label>
-                    <input type="text" id="table_number" name="table_number" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ old('table_number') }}">
+                    <div class="flex space-x-2">
+                        <input type="text" id="table_number" name="table_number" required
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               value="{{ old('table_number', $nextNumber) }}">
+                        <button type="button" onclick="autoGenerateNumber()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Nomor meja akan otomatis digenerate. Anda bisa mengubahnya jika diperlukan.</p>
                     @error('table_number')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
@@ -49,7 +55,7 @@
                 <div class="bg-blue-50 p-4 rounded">
                     <p class="text-sm text-blue-800">
                         <i class="fas fa-info-circle mr-2"></i>
-                        QR Code akan otomatis dibuat saat meja ditambahkan. QR Code akan mengarah ke halaman pemesanan untuk meja ini.
+                        QR Code akan otomatis dibuat saat meja ditambahkan menggunakan API online. QR Code akan mengarah ke halaman pemesanan untuk meja ini.
                     </p>
                 </div>
             </div>
@@ -62,4 +68,15 @@
         </div>
     </form>
 </div>
+
+<script>
+function autoGenerateNumber() {
+    const currentNumber = document.getElementById('table_number').value;
+    if (currentNumber) {
+        const num = parseInt(currentNumber);
+        const nextNumber = (num + 1).toString().padStart(2, '0');
+        document.getElementById('table_number').value = nextNumber;
+    }
+}
+</script>
 @endsection

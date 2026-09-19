@@ -20,6 +20,7 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Meja</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kapasitas</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -33,6 +34,13 @@
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Tersedia</span>
                                 @else
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Tidak Tersedia</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                @if($table->qr_code)
+                                    <span class="text-green-600"><i class="fas fa-check-circle"></i> Ada</span>
+                                @else
+                                    <span class="text-red-600"><i class="fas fa-times-circle"></i> Tidak Ada</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm">
