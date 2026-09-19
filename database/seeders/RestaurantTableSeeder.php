@@ -13,6 +13,9 @@ class RestaurantTableSeeder extends Seeder
      */
     public function run(): void
     {
+        // Hapus semua meja yang ada untuk fresh start
+        RestaurantTable::query()->delete();
+        
         $tables = [
             ['table_number' => '01', 'capacity' => 2, 'is_available' => true],
             ['table_number' => '02', 'capacity' => 2, 'is_available' => true],

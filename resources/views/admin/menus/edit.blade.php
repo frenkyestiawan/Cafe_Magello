@@ -78,7 +78,7 @@
                 
                 <div class="mb-4">
                     <label class="flex items-center">
-                        <input type="checkbox" name="is_available" class="mr-2"
+                        <input type="checkbox" name="is_available" value="1" class="mr-2"
                                {{ old('is_available', $menu->is_available) ? 'checked' : '' }}>
                         <span class="text-gray-700">Tersedia</span>
                     </label>

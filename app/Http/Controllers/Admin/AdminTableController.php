@@ -31,29 +31,28 @@ class AdminTableController extends Controller
     
     public function store(Request $request)
     {
-        $request->validate([
-            'table_number' => 'required|string|unique:restaurant_tables,table_number|regex:/^[0-9]+$/',
+        $validated = $request->validate([
+            'table_number' => 'required|string|unique:restaurant_tables,table_number',
             'capacity' => 'required|integer|min:1',
             'is_available' => 'boolean',
         ]);
         
         // Format table number to ensure it's 2 digits
-        $tableNumber = str_pad(intval($request->table_number), 2, '0', STR_PAD_LEFT);
+        $tableNumber = str_pad(intval($validated['table_number']), 2, '0', STR_PAD_LEFT);
         
-        $data = $request->all();
-        $data['table_number'] = $tableNumber;
-        $data['is_available'] = $request->has('is_available');
-        
-        $table = RestaurantTable::create($data);
+        $table = RestaurantTable::create([
+            'table_number' => $tableNumber,
+            'capacity' => $validated['capacity'],
+            'is_available' => $request->boolean('is_available'),
+        ]);
         
         // Generate QR Code using online API
-        $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $table->table_number;
+        $qrCodeUrl = request()->getSchemeAndHttpHost() . '/order/table/' . $table->table_number;
         $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
         
-        // Save the QR Code API URL for display
         $table->update(['qr_code' => $qrCodeApiUrl]);
         
-        return redirect()->route('admin.tables.index')->with('success', 'Meja berhasil ditambahkan.');
+        return redirect()->route('admin.tables.show', $table->id)->with('success', 'Meja berhasil ditambahkan.');
     }
     
     public function show($id)
@@ -70,8 +69,8 @@ class AdminTableController extends Controller
     
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'table_number' => 'required|string|unique:restaurant_tables,table_number,' . $id . '|regex:/^[0-9]+$/',
+        $validated = $request->validate([
+            'table_number' => 'required|string|unique:restaurant_tables,table_number,' . $id,
             'capacity' => 'required|integer|min:1',
             'is_available' => 'boolean',
         ]);
@@ -79,15 +78,17 @@ class AdminTableController extends Controller
         $table = RestaurantTable::findOrFail($id);
         
         // Format table number to ensure it's 2 digits
-        $tableNumber = str_pad(intval($request->table_number), 2, '0', STR_PAD_LEFT);
+        $tableNumber = str_pad(intval($validated['table_number']), 2, '0', STR_PAD_LEFT);
         
-        $data = $request->all();
-        $data['table_number'] = $tableNumber;
-        $data['is_available'] = $request->has('is_available');
+        $data = [
+            'table_number' => $tableNumber,
+            'capacity' => $validated['capacity'],
+            'is_available' => $request->boolean('is_available'),
+        ];
         
         // Regenerate QR Code if table number changed
         if ($table->table_number !== $tableNumber) {
-            $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $tableNumber;
+            $qrCodeUrl = request()->getSchemeAndHttpHost() . '/order/table/' . $tableNumber;
             $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
             $data['qr_code'] = $qrCodeApiUrl;
         }
@@ -109,7 +110,7 @@ class AdminTableController extends Controller
     {
         $table = RestaurantTable::findOrFail($id);
         
-        $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $table->table_number;
+        $qrCodeUrl = request()->getSchemeAndHttpHost() . '/order/table/' . $table->table_number;
         $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
         
         $table->update(['qr_code' => $qrCodeApiUrl]);

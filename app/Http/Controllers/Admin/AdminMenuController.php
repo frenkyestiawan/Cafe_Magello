@@ -39,12 +39,12 @@ class AdminMenuController extends Controller
             $imagePath = $request->file('image')->store('menus', 'public');
             $data['image'] = $imagePath;
         }
+
+        $data['is_available'] = $request->boolean('is_available');
         
-        $data['is_available'] = $request->has('is_available');
+        $menu = Menu::create($data);
         
-        Menu::create($data);
-        
-        return redirect()->route('admin.menus.index')->with('success', 'Menu berhasil ditambahkan.');
+        return redirect()->route('admin.menus.show', $menu->id)->with('success', 'Menu berhasil ditambahkan.');
     }
     
     public function show($id)
@@ -82,7 +82,7 @@ class AdminMenuController extends Controller
             $data['image'] = $imagePath;
         }
         
-        $data['is_available'] = $request->has('is_available');
+        $data['is_available'] = $request->boolean('is_available');
         
         $menu->update($data);
         
