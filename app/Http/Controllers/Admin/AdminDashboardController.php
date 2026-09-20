@@ -14,10 +14,10 @@ class AdminDashboardController extends Controller
         $today = Carbon::today();
         
         $totalOrdersToday = Order::whereDate('created_at', $today)->count();
-        $pendingOrders = Order::where('status', 'Menunggu')->count();
-        $processingOrders = Order::where('status', 'Diproses')->count();
-        $completedOrders = Order::where('status', 'Selesai')->count();
-        $totalRevenue = Order::where('status', 'Selesai')->sum('total_amount');
+        $pendingOrders = Order::whereIn('status', [Order::STATUS_MENUNGGU, 'Menunggu'])->count();
+        $processingOrders = Order::whereIn('status', [Order::STATUS_DIPROSES, 'Diproses'])->count();
+        $completedOrders = Order::whereIn('status', [Order::STATUS_SELESAI, 'Selesai'])->count();
+        $totalRevenue = Order::whereIn('status', [Order::STATUS_SELESAI, 'Selesai'])->sum('total_amount');
         
         $recentOrders = Order::with(['restaurantTable', 'orderDetails.menu'])
             ->orderBy('created_at', 'desc')

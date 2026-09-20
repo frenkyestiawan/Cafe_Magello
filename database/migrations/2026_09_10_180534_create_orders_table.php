@@ -19,13 +19,7 @@ return new class extends Migration
 
             $table->string('customer_name')->nullable();
 
-            $table->enum('status', [
-                'pending',
-                'processing',
-                'ready',
-                'completed',
-                'cancelled'
-            ])->default('pending');
+            $table->string('status')->default('menunggu');
 
             $table->decimal('total_amount', 12, 2)->default(0);
 

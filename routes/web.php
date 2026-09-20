@@ -9,10 +9,28 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\AdminTableController;
 use App\Http\Controllers\Admin\AdminReportController;
+use App\Http\Controllers\KitchenController;
 
 Route::get('/', function () {
     return view('home');
 })->name('home');
+
+Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
+Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+
+Route::get('/kitchen/login', [AdminAuthController::class, 'showLoginForm'])->name('kitchen.login');
+
+Route::middleware(['auth', 'role:kitchen'])
+    ->prefix('kitchen')
+    ->name('kitchen.')
+    ->group(function () {
+        Route::get('/', [KitchenController::class, 'index'])->name('dashboard');
+        Route::patch('/orders/{order}/start', [KitchenController::class, 'start'])->name('orders.start');
+        Route::patch('/orders/{order}/complete', [KitchenController::class, 'complete'])->name('orders.complete');
+        Route::get('/orders/{order}/print', [KitchenController::class, 'print'])->name('orders.print');
+        Route::patch('/orders/{order}/pickup', [KitchenController::class, 'pickup'])->name('orders.pickup');
+    });
 
 Route::get('/order/select-table', [OrderController::class, 'selectTable'])->name('order.select-table');
 Route::get('/order/table/{tableNumber}', [OrderController::class, 'orderWithTable'])->name('order.with-table');

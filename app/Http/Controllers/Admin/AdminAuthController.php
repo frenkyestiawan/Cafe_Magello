@@ -14,6 +14,11 @@ class AdminAuthController extends Controller
         if (Auth::check() && Auth::user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
+
+        if (Auth::check() && Auth::user()->isKitchen()) {
+            return redirect()->route('kitchen.dashboard');
+        }
+
         return view('admin.auth.login');
     }
 
@@ -26,13 +31,20 @@ class AdminAuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
+
             if ($user->isAdmin()) {
                 $request->session()->regenerate();
                 return redirect()->intended(route('admin.dashboard'));
             }
+
+            if ($user->isKitchen()) {
+                $request->session()->regenerate();
+                return redirect()->intended(route('kitchen.dashboard'));
+            }
+
             Auth::logout();
             return back()->withErrors([
-                'email' => 'Anda tidak memiliki akses admin.',
+                'email' => 'Anda tidak memiliki akses ke panel ini.',
             ]);
         }
 
@@ -46,6 +58,7 @@ class AdminAuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login');
+
+        return redirect()->route('login');
     }
 }

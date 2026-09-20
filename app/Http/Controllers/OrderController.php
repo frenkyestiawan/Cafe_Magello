@@ -156,7 +156,7 @@ class OrderController extends Controller
             'order_code' => $orderCode,
             'customer_name' => $validated['customer_name'],
             'customer_phone' => $validated['customer_phone'],
-            'status' => 'pending',
+            'status' => Order::STATUS_MENUNGGU,
             'total_amount' => $totalAmount,
             'payment_status' => 'unpaid',
         ]);

@@ -34,13 +34,25 @@ class AdminOrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:Menunggu,Diproses,Selesai,Sudah Diambil',
+            'status' => 'required|in:menunggu,diproses,selesai,sudah_diambil,Menunggu,Diproses,Selesai,Sudah Diambil',
         ]);
-        
+
         $order = Order::findOrFail($id);
-        $order->status = $request->status;
+        $status = strtolower(trim($request->status));
+        $allowed = [
+            Order::STATUS_MENUNGGU,
+            Order::STATUS_DIPROSES,
+            Order::STATUS_SELESAI,
+            Order::STATUS_SUDAH_DIAMBI,
+        ];
+
+        if (!in_array($status, $allowed, true)) {
+            return redirect()->back()->with('error', 'Status pesanan tidak valid.');
+        }
+
+        $order->status = $status;
         $order->save();
-        
+
         return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
 }
