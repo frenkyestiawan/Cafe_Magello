@@ -45,12 +45,13 @@ class PaymentController extends Controller
             ]);
         }
 
-        // Update order payment status
+        // Keep kitchen workflow consistent: payment is independent from kitchen status.
+        // Order should stay in the kitchen queue as waiting until staff starts it.
         $order->update([
             'payment_status' => 'paid',
-            'status' => 'processing',
+            'status' => Order::STATUS_MENUNGGU,
         ]);
 
-        return redirect()->route('order.show', $orderId)->with('success', 'Pembayaran berhasil! Pesanan Anda sedang diproses.');
+        return redirect()->route('order.show', $orderId)->with('success', 'Pembayaran berhasil! Pesanan Anda masuk antrian dapur.');
     }
 }

@@ -17,7 +17,8 @@ class AdminReportController extends Controller
         
         $orders = Order::with(['restaurantTable', 'orderDetails'])
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'Selesai')
+            ->where('payment_status', 'paid')
+            ->whereIn('status', [Order::STATUS_SUDAH_DIAMBI, 'Sudah Diambil'])
             ->orderBy('created_at', 'desc')
             ->get();
         

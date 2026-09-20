@@ -12,7 +12,7 @@ class KitchenController extends Controller
     {
         $orders = Order::with(['restaurantTable', 'orderDetails.menu'])
             ->whereNotIn('status', [Order::STATUS_SUDAH_DIAMBI, 'Sudah Diambil'])
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         $waitingOrders = $orders->filter(fn ($order) => $this->normalizeStatus($order->status) === Order::STATUS_MENUNGGU);

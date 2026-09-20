@@ -31,10 +31,10 @@
                 @csrf
                 <div class="flex items-center space-x-2">
                     <select name="status" class="border border-gray-300 rounded px-3 py-2">
-                        <option value="Menunggu" {{ $order->status == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
-                        <option value="Diproses" {{ $order->status == 'Diproses' ? 'selected' : '' }}>Diproses</option>
-                        <option value="Selesai" {{ $order->status == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                        <option value="Sudah Diambil" {{ $order->status == 'Sudah Diambil' ? 'selected' : '' }}>Sudah Diambil</option>
+                        <option value="menunggu" {{ $order->status == 'menunggu' ? 'selected' : '' }}>Menunggu</option>
+                        <option value="diproses" {{ $order->status == 'diproses' ? 'selected' : '' }}>Diproses</option>
+                        <option value="selesai" {{ $order->status == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                        <option value="sudah_diambil" {{ $order->status == 'sudah_diambil' ? 'selected' : '' }}>Sudah Diambil</option>
                     </select>
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                         Update

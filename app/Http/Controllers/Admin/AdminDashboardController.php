@@ -16,8 +16,10 @@ class AdminDashboardController extends Controller
         $totalOrdersToday = Order::whereDate('created_at', $today)->count();
         $pendingOrders = Order::whereIn('status', [Order::STATUS_MENUNGGU, 'Menunggu'])->count();
         $processingOrders = Order::whereIn('status', [Order::STATUS_DIPROSES, 'Diproses'])->count();
-        $completedOrders = Order::whereIn('status', [Order::STATUS_SELESAI, 'Selesai'])->count();
-        $totalRevenue = Order::whereIn('status', [Order::STATUS_SELESAI, 'Selesai'])->sum('total_amount');
+        $completedOrders = Order::whereIn('status', [Order::STATUS_SUDAH_DIAMBI, 'Sudah Diambil'])->count();
+        $totalRevenue = Order::where('payment_status', 'paid')
+            ->whereIn('status', [Order::STATUS_SUDAH_DIAMBI, 'Sudah Diambil'])
+            ->sum('total_amount');
         
         $recentOrders = Order::with(['restaurantTable', 'orderDetails.menu'])
             ->orderBy('created_at', 'desc')

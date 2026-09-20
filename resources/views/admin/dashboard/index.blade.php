@@ -48,7 +48,7 @@
     <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm">Selesai</p>
+                <p class="text-gray-500 text-sm">Sudah Diambil</p>
                 <p class="text-3xl font-bold text-green-600">{{ $completedOrders }}</p>
             </div>
             <div class="bg-green-100 p-3 rounded-full">
@@ -97,14 +97,20 @@
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->restaurantTable->table_number ?? '-' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                @if($order->status == 'Menunggu')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Menunggu</span>
-                                @elseif($order->status == 'Diproses')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">Diproses</span>
-                                @elseif($order->status == 'Selesai')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Selesai</span>
-                                @elseif($order->status == 'Sudah Diambil')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Sudah Diambil</span>
+                                @php
+                                    $statusLabel = $order->status_label;
+                                @endphp
+
+                                @if($order->status == 'menunggu')
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{{ $statusLabel }}</span>
+                                @elseif($order->status == 'diproses')
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">{{ $statusLabel }}</span>
+                                @elseif($order->status == 'selesai')
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Siap Diambil</span>
+                                @elseif($order->status == 'sudah_diambil')
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $statusLabel }}</span>
+                                @else
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{{ $statusLabel }}</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->created_at->format('H:i') }}</td>

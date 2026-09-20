@@ -6,7 +6,7 @@
     <title>KDS - Cafe Magello</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 text-slate-800">
+<body class="bg-slate-100 text-slate-800" onload="setInterval(() => window.location.reload(), 10000)">
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
             <div>
@@ -40,6 +40,7 @@
                     <h2 class="text-xl font-bold text-amber-600">MENUNGGU</h2>
                     <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-sm font-semibold">{{ $waitingOrders->count() }}</span>
                 </div>
+                <div class="mb-3 text-[11px] uppercase tracking-[0.2em] text-slate-400">Auto refresh 10s</div>
                 <div class="space-y-4">
                     @forelse($waitingOrders as $order)
                         <article class="border border-slate-200 rounded-xl p-4 bg-amber-50">

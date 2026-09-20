@@ -13,13 +13,23 @@ class AdminOrderController extends Controller
     {
         $status = $request->get('status');
         $query = Order::with(['restaurantTable', 'orderDetails.menu', 'payment']);
-        
+
         if ($status) {
-            $query->where('status', $status);
+            $normalizedStatus = strtolower(trim($status));
+            $allowed = [
+                Order::STATUS_MENUNGGU,
+                Order::STATUS_DIPROSES,
+                Order::STATUS_SELESAI,
+                Order::STATUS_SUDAH_DIAMBI,
+            ];
+
+            if (in_array($normalizedStatus, $allowed, true)) {
+                $query->where('status', $normalizedStatus);
+            }
         }
-        
+
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-        
+
         return view('admin.orders.index', compact('orders', 'status'));
     }
     
