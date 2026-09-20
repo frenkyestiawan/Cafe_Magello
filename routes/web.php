@@ -10,9 +10,42 @@ use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\AdminTableController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\KitchenController;
+use App\Models\Menu;
 
 Route::get('/', function () {
-    return view('home');
+    $menus = Menu::with('category')
+        ->where('is_available', true)
+        ->get()
+        ->map(function ($menu) {
+            return [
+                'id' => $menu->id,
+                'name' => $menu->name,
+                'price' => $menu->price,
+                'category' => $menu->category?->name ?? 'Lainnya',
+                'desc' => $menu->description,
+                'image' => $menu->image ?? '',
+                'badge' => null,
+                'eta' => 10,
+            ];
+        })
+        ->all();
+
+    $categories = collect($menus)
+        ->pluck('category')
+        ->filter()
+        ->unique()
+        ->values()
+        ->all();
+
+    return view('home', [
+        'trackUrl' => route('order.index'),
+        'tableNo' => '',
+        'openTime' => '09:00',
+        'closeTime' => '23:00',
+        'kitchenBusy' => false,
+        'categories' => $categories,
+        'menus' => $menus,
+    ]);
 })->name('home');
 
 Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
