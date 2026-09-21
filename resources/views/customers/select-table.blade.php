@@ -314,6 +314,7 @@
             var busy = false;
             var handled = false;
             var invalidTimer = null;
+            var navTimer = null;
 
             function setState(state, message) {
                 frame.dataset.state = state;
@@ -345,11 +346,33 @@
                 return t ? t[1] : null;
             }
 
+            /* Tentukan tujuan dari isi QR:
+               - link berisi /order, /menu, /meja atau /table -> langsung dibuka.
+                 Yang dipakai hanya path + query-nya, domainnya diganti domain yang sedang
+                 dibuka (jadi tetap jalan walau QR dicetak dari localhost / domain lain).
+               - selain itu -> ambil nomor meja lalu kirim ke order.set-table. */
+            function resolveDestination(text) {
+                try {
+                    var url = new URL(text);
+                    if (/^https?:$/.test(url.protocol) && /\/(order|menu|meja|table)(\/|$)/i.test(url.pathname)) {
+                        return {
+                            type: 'url',
+                            href: window.location.origin + url.pathname + url.search + url.hash,
+                            table: extractTable(text)
+                        };
+                    }
+                } catch (e) { /* bukan URL */ }
+
+                var table = extractTable(text);
+                return table ? { type: 'table', table: table } : null;
+            }
+
             function onScanSuccess(decodedText) {
                 if (handled) return;
+                var text = String(decodedText || '').trim();
+                var dest = resolveDestination(text);
 
-                var table = extractTable(decodedText);
-                if (!table) {
+                if (!dest) {
                     setState('scanning', 'QR Code ini bukan QR meja Magello. Coba QR yang lain.');
                     clearTimeout(invalidTimer);
                     invalidTimer = setTimeout(function () {
@@ -360,14 +383,32 @@
 
                 handled = true;
                 if (navigator.vibrate) navigator.vibrate(60);
-                okText.textContent = 'Meja ' + table + ' terdeteksi';
-                setState('success', 'Meja ' + table + ' terdeteksi');
+                var label = dest.table ? 'Meja ' + dest.table + ' terdeteksi' : 'QR Code terdeteksi';
+                okText.textContent = label;
+                setState('success', label);
 
-                var submit = function () {
-                    tableInput.value = table;
-                    setTimeout(function () { form.submit(); }, 600);
-                };
-                scanner.stop().then(submit).catch(submit);
+                // Pindah halaman tanpa menunggu kamera berhenti (stop() bisa macet di beberapa browser)
+                setTimeout(function () {
+                    try {
+                        if (dest.type === 'url') {
+                            window.location.assign(dest.href);
+                        } else {
+                            tableInput.value = dest.table;
+                            form.submit();
+                        }
+                    } catch (e) {
+                        showNavFailure(text);
+                    }
+                }, 250);
+                try { scanner.stop().catch(function () {}); } catch (e) {}
+
+                // Jaring pengaman: jika 5 detik masih di halaman ini, tampilkan isi QR agar mudah dilacak
+                navTimer = setTimeout(function () { showNavFailure(text); }, 5000);
+            }
+
+            function showNavFailure(text) {
+                errorText.textContent = 'Halaman tidak berpindah. Isi QR: ' + text.slice(0, 120);
+                setState('error', 'Gagal membuka menu.');
             }
 
             function describeError(err) {
@@ -395,6 +436,7 @@
                 if (busy) return Promise.resolve();
                 busy = true;
                 handled = false;
+                clearTimeout(navTimer);
                 setState('starting', 'Menyiapkan kamera…');
 
                 if (typeof Html5Qrcode === 'undefined') {
