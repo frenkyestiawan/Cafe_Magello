@@ -53,6 +53,7 @@ Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit
 Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
 Route::get('/kitchen/login', [AdminAuthController::class, 'showLoginForm'])->name('kitchen.login');
+Route::post('/kitchen/login', [AdminAuthController::class, 'login'])->name('kitchen.login.submit');
 
 Route::middleware(['auth', 'role:kitchen'])
     ->prefix('kitchen')
@@ -81,11 +82,6 @@ Route::post('/payment/check-status/{orderId}', [PaymentController::class, 'check
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
-    // Auth Routes
-    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminAuthController::class, 'login']);
-    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
-    
     // Protected Routes
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');

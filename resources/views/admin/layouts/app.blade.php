@@ -63,7 +63,7 @@
             </nav>
             
             <div class="p-4 border-t border-gray-700">
-                <form action="{{ route('admin.logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit" class="w-full flex items-center justify-center p-2 rounded hover:bg-gray-700 text-left">
                         <i class="fas fa-sign-out-alt w-6"></i>

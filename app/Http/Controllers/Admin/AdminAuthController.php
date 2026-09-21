@@ -19,7 +19,7 @@ class AdminAuthController extends Controller
             return redirect()->route('kitchen.dashboard');
         }
 
-        return view('admin.auth.login');
+        return view('auth.login');
     }
 
     public function login(Request $request)
