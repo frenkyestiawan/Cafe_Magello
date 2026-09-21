@@ -19,7 +19,7 @@ class PaymentController extends Controller
             return redirect()->route('order.show', $orderId)->with('success', 'Pembayaran sudah selesai');
         }
 
-        return view('order.payment', compact('order'));
+        return view('customers.payment', compact('order'));
     }
 
     public function checkStatus(Request $request, $orderId)

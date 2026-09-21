@@ -52,6 +52,10 @@ Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login
 Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
+// Login aliases kept in sync with the current auth controller used by the app.
+Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+
 Route::get('/kitchen/login', [AdminAuthController::class, 'showLoginForm'])->name('kitchen.login');
 Route::post('/kitchen/login', [AdminAuthController::class, 'login'])->name('kitchen.login.submit');
 

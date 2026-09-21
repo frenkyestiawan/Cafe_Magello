@@ -21,12 +21,12 @@ class OrderController extends Controller
             return $item['price'] * $item['quantity'];
         });
 
-        return view('order.index', compact('menus', 'categories', 'cart', 'subtotal', 'tableId'));
+        return view('customers.index', compact('menus', 'categories', 'cart', 'subtotal', 'tableId'));
     }
 
     public function selectTable()
     {
-        return view('order.select-table');
+        return view('customers.select-table');
     }
 
     public function orderWithTable($tableNumber)
@@ -59,7 +59,7 @@ class OrderController extends Controller
             return $item['price'] * $item['quantity'];
         });
 
-        return view('order.checkout', compact('cart', 'subtotal'));
+        return view('customers.checkout', compact('cart', 'subtotal'));
     }
 
     public function addToCart(Request $request)
@@ -124,7 +124,7 @@ class OrderController extends Controller
     {
         $order = Order::with(['orderDetails.menu', 'restaurantTable'])->findOrFail($id);
 
-        return view('order.show', compact('order'));
+        return view('customers.show', compact('order'));
     }
 
     public function store(Request $request)
