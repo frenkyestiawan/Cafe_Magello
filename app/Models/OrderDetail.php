@@ -10,6 +10,8 @@ class OrderDetail extends Model
     protected $fillable = [
         'order_id',
         'menu_id',
+        'menu_variant_id',
+        'variant_name',
         'quantity',
         'price',
         'subtotal',
@@ -25,5 +27,10 @@ class OrderDetail extends Model
     public function menu(): BelongsTo
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(MenuVariant::class, 'menu_variant_id');
     }
 }

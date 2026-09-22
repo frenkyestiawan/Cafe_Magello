@@ -44,11 +44,16 @@
                 </div>
                 
                 <div class="mb-4">
-                    <label for="price" class="block text-gray-700 font-medium mb-2">Harga</label>
-                    <input type="number" id="price" name="price" required min="0" step="1000"
-                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ old('price', $menu->price) }}">
-                    @error('price')
+                    <label class="block text-gray-700 font-medium mb-2">Variant Menu</label>
+                    <div id="variant-list" class="space-y-3"></div>
+                    <button type="button" id="add-variant" class="mt-3 text-sm text-blue-600 hover:text-blue-800">+ Tambah variant</button>
+                    @error('variants')
+                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                    @error('variants.*.name')
+                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                    @error('variants.*.price')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -93,4 +98,65 @@
         </div>
     </form>
 </div>
+
+<script>
+    const variantNames = ['Small', 'Medium', 'Large'];
+    const variantList = document.getElementById('variant-list');
+    const addVariantBtn = document.getElementById('add-variant');
+    const maxVariants = 3;
+    const existingVariants = @json($menu->variants->map(fn ($variant) => ['name' => $variant->name, 'price' => (float) $variant->price])->values()->all());
+
+    function buildVariantRow(name = 'Small', price = 0, index = 0) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col md:flex-row md:items-end gap-3 rounded border border-gray-200 p-3';
+        wrapper.innerHTML = `
+            <div class="flex-1">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Nama Variant</label>
+                <select name="variants[${index}][name]" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    ${variantNames.map(option => `<option value="${option}" ${option === name ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Harga Variant</label>
+                <input type="number" name="variants[${index}][price]" min="0" step="1000" value="${price}" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="button" class="remove-variant text-red-500 hover:text-red-700 px-2 py-2">Hapus</button>
+        `;
+
+        wrapper.querySelector('.remove-variant').addEventListener('click', function () {
+            const rows = variantList.querySelectorAll('> div');
+            if (rows.length > 1) {
+                wrapper.remove();
+            }
+        });
+
+        return wrapper;
+    }
+
+    function renderVariantRows() {
+        variantList.innerHTML = '';
+        const rows = existingVariants.length ? existingVariants : [{ name: 'Small', price: 0 }];
+        rows.forEach((variant, index) => {
+            variantList.appendChild(buildVariantRow(variant.name || 'Small', variant.price || 0, index));
+        });
+
+        if (rows.length < maxVariants) {
+            addVariantBtn.hidden = false;
+        } else {
+            addVariantBtn.hidden = true;
+        }
+    }
+
+    addVariantBtn.addEventListener('click', function () {
+        const rows = variantList.querySelectorAll('> div');
+        if (rows.length >= maxVariants) return;
+        const nextIndex = rows.length;
+        variantList.appendChild(buildVariantRow(variantNames[nextIndex] || 'Small', 0, nextIndex));
+        if (variantList.querySelectorAll('> div').length >= maxVariants) {
+            addVariantBtn.hidden = true;
+        }
+    });
+
+    renderVariantRows();
+</script>
 @endsection

@@ -85,11 +85,24 @@
                         <div class="p-4">
                             <h3 class="font-semibold text-lg mb-2">{{ $menu->name }}</h3>
                             <p class="text-gray-600 text-sm mb-3">{{ $menu->description ?? 'Tidak ada deskripsi' }}</p>
+                            @php $variants = $menu->variants()->where('is_available', true)->orderBy('name')->get(); @endphp
+                            @if($variants->isNotEmpty())
+                                <div class="mb-3 space-y-2">
+                                    @foreach($variants as $variant)
+                                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                                            <input type="radio" name="variant_{{ $menu->id }}" value="{{ $variant->id }}" data-name="{{ $variant->name }}" data-price="{{ $variant->price }}" {{ $loop->first ? 'checked' : '' }}>
+                                            <span>{{ $variant->name }} - Rp {{ number_format($variant->price, 0, ',', '.') }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @endif
                             <div class="flex justify-between items-center">
-                                <span class="text-xl font-bold text-orange-600">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
-                                <form action="{{ route('order.add-to-cart') }}" method="POST" class="js-add-to-cart-form" data-id="{{ $menu->id }}" data-name="{{ $menu->name }}" data-price="{{ $menu->price }}">
+                                <span class="text-xl font-bold text-orange-600">Rp {{ number_format($variants->isNotEmpty() ? $variants->first()->price : $menu->price, 0, ',', '.') }}</span>
+                                <form action="{{ route('order.add-to-cart') }}" method="POST" class="js-add-to-cart-form" data-id="{{ $menu->id }}" data-name="{{ $menu->name }}" data-price="{{ $variants->isNotEmpty() ? $variants->first()->price : $menu->price }}">
                                     @csrf
                                     <input type="hidden" name="menu_id" value="{{ $menu->id }}">
+                                    <input type="hidden" name="variant_id" value="{{ $variants->isNotEmpty() ? $variants->first()->id : '' }}">
+                                    <input type="hidden" name="variant_name" value="{{ $variants->isNotEmpty() ? $variants->first()->name : '' }}">
                                     <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
                                         + Tambah
                                     </button>
@@ -165,7 +178,9 @@
                     name: item.name,
                     price: Number(item.price || 0),
                     quantity: qty,
-                    qty: qty
+                    qty: qty,
+                    variant_id: item.variant_id || null,
+                    variant_name: item.variant_name || null
                 };
             });
             return normalized;
@@ -194,10 +209,13 @@
             renderCart();
         }
 
-        function addToCart(id, name, price) {
+        function addToCart(id, name, price, variantId = null, variantName = null) {
             const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            const current = stored[id] || { id: String(id), name, price: Number(price), qty: 0 };
+            const current = stored[id] || { id: String(id), name, price: Number(price), qty: 0, variant_id: variantId, variant_name: variantName };
             current.qty = Number(current.qty || 0) + 1;
+            current.variant_id = variantId || current.variant_id || null;
+            current.variant_name = variantName || current.variant_name || null;
+            current.price = Number(price || current.price || 0);
             stored[id] = current;
             saveCart(stored);
         }
@@ -276,8 +294,15 @@
                 event.preventDefault();
                 const id = form.getAttribute('data-id');
                 const name = form.getAttribute('data-name');
-                const price = Number(form.getAttribute('data-price') || 0);
-                addToCart(id, name, price);
+                const selectedVariant = form.closest('.menu-item').querySelector('input[type="radio"]:checked');
+                const variantId = selectedVariant ? selectedVariant.value : null;
+                const variantName = selectedVariant ? selectedVariant.getAttribute('data-name') : null;
+                const price = Number(selectedVariant ? selectedVariant.getAttribute('data-price') : form.getAttribute('data-price') || 0);
+
+                form.querySelector('input[name="variant_id"]').value = variantId || '';
+                form.querySelector('input[name="variant_name"]').value = variantName || '';
+
+                addToCart(id, name, price, variantId, variantName);
                 form.submit();
             });
         });

@@ -22,6 +22,11 @@ class Menu extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
+    public function variants(): HasMany
+    {
+        return $this->hasMany(MenuVariant::class);
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

@@ -62,7 +62,12 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach($order->orderDetails as $item)
                         <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ $item->menu->name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                {{ $item->menu->name }}
+                                @if(!empty($item->variant_name))
+                                    <span class="text-blue-600 font-medium">({{ $item->variant_name }})</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $item->menu->category->name ?? '-' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $item->quantity }}</td>

@@ -75,7 +75,12 @@
         <table>
             @foreach($order->orderDetails as $detail)
                 <tr>
-                    <td>{{ $detail->menu?->name ?? 'Menu' }}</td>
+                    <td>
+                        {{ $detail->menu?->name ?? 'Menu' }}
+                        @if(!empty($detail->variant_name))
+                            <div style="font-size: 10px; color: #4b5563;">{{ $detail->variant_name }}</div>
+                        @endif
+                    </td>
                     <td class="qty">x {{ $detail->quantity }}</td>
                 </tr>
             @endforeach

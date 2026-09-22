@@ -53,7 +53,12 @@
                             <ul class="space-y-2 text-sm mb-4">
                                 @foreach($order->orderDetails as $detail)
                                     <li class="flex justify-between gap-3">
-                                        <span>{{ $detail->menu?->name ?? 'Menu' }}</span>
+                                        <span>
+                                            {{ $detail->menu?->name ?? 'Menu' }}
+                                            @if(!empty($detail->variant_name))
+                                                <span class="text-xs text-slate-500">({{ $detail->variant_name }})</span>
+                                            @endif
+                                        </span>
                                         <span class="font-semibold">× {{ $detail->quantity }}</span>
                                     </li>
                                 @endforeach
@@ -90,7 +95,12 @@
                             <ul class="space-y-2 text-sm mb-4">
                                 @foreach($order->orderDetails as $detail)
                                     <li class="flex justify-between gap-3">
-                                        <span>{{ $detail->menu?->name ?? 'Menu' }}</span>
+                                        <span>
+                                            {{ $detail->menu?->name ?? 'Menu' }}
+                                            @if(!empty($detail->variant_name))
+                                                <span class="text-xs text-slate-500">({{ $detail->variant_name }})</span>
+                                            @endif
+                                        </span>
                                         <span class="font-semibold">× {{ $detail->quantity }}</span>
                                     </li>
                                 @endforeach
@@ -127,7 +137,12 @@
                             <ul class="space-y-2 text-sm mb-4">
                                 @foreach($order->orderDetails as $detail)
                                     <li class="flex justify-between gap-3">
-                                        <span>{{ $detail->menu?->name ?? 'Menu' }}</span>
+                                        <span>
+                                            {{ $detail->menu?->name ?? 'Menu' }}
+                                            @if(!empty($detail->variant_name))
+                                                <span class="text-xs text-slate-500">({{ $detail->variant_name }})</span>
+                                            @endif
+                                        </span>
                                         <span class="font-semibold">× {{ $detail->quantity }}</span>
                                     </li>
                                 @endforeach

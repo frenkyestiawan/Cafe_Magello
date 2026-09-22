@@ -75,12 +75,16 @@ class OrderController extends Controller
 
             $id = (int) ($item['id'] ?? $menuId);
             $menu = Menu::find($id);
+            $variantId = $item['variant_id'] ?? null;
+            $variantName = $item['variant_name'] ?? null;
 
             $normalized[$id] = [
                 'id' => $id,
                 'name' => $item['name'] ?? $menu?->name ?? 'Menu',
                 'price' => (float) ($item['price'] ?? $menu?->price ?? 0),
                 'quantity' => $quantity,
+                'variant_id' => $variantId,
+                'variant_name' => $variantName,
                 'level' => $item['level'] ?? null,
                 'notes' => $item['notes'] ?? null,
             ];
@@ -97,18 +101,25 @@ class OrderController extends Controller
     public function addToCart(Request $request)
     {
         $menuId = $request->input('menu_id');
-        $menu = Menu::findOrFail($menuId);
+        $menu = Menu::with('variants')->findOrFail($menuId);
+        $variantId = $request->input('variant_id');
+        $variant = $variantId ? $menu->variants()->find($variantId) : $menu->variants()->where('is_available', true)->orderBy('name')->first();
 
         $cart = session('cart', []);
 
         if (isset($cart[$menuId])) {
             $cart[$menuId]['quantity'] += 1;
+            $cart[$menuId]['variant_id'] = $variant?->id ?? $cart[$menuId]['variant_id'] ?? null;
+            $cart[$menuId]['variant_name'] = $variant?->name ?? $cart[$menuId]['variant_name'] ?? null;
+            $cart[$menuId]['price'] = $variant ? (float) $variant->price : ($cart[$menuId]['price'] ?? $menu->price);
         } else {
             $cart[$menuId] = [
                 'id' => $menu->id,
                 'name' => $menu->name,
-                'price' => $menu->price,
+                'price' => $variant ? (float) $variant->price : (float) $menu->price,
                 'quantity' => 1,
+                'variant_id' => $variant?->id,
+                'variant_name' => $variant?->name,
                 'level' => $request->input('level'),
                 'notes' => $request->input('notes'),
             ];
@@ -194,9 +205,16 @@ class OrderController extends Controller
         ]);
 
         foreach ($cart as $item) {
+            $variant = null;
+            if (!empty($item['variant_id'])) {
+                $variant = \App\Models\MenuVariant::find($item['variant_id']);
+            }
+
             OrderDetail::create([
                 'order_id' => $order->id,
                 'menu_id' => $item['id'],
+                'menu_variant_id' => $variant?->id,
+                'variant_name' => $item['variant_name'] ?? $variant?->name,
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
                 'subtotal' => $item['price'] * $item['quantity'],

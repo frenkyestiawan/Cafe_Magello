@@ -39,6 +39,9 @@
                 <div class="flex-1">
                     <p class="font-medium text-gray-800">
                         {{ $detail->menu->name }}
+                        @if(!empty($detail->variant_name))
+                            <span class="text-sm text-blue-600">{{ $detail->variant_name }}</span>
+                        @endif
                         @if($detail->level)
                         <span class="text-sm text-gray-500"> Level {{ $detail->level }}</span>
                         @endif
