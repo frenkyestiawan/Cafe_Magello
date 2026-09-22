@@ -217,6 +217,13 @@
 
             <div id="menu-grid" class="mt-8 grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-5">
                 @foreach ($menus as $m)
+                    @php
+                        $variants = collect($m['variants'] ?? [])->sortBy(function ($variant) {
+                            $order = ['Small' => 1, 'Medium' => 2, 'Large' => 3];
+                            return $order[$variant['name']] ?? 99;
+                        })->values();
+                        $selectedVariant = $variants->first();
+                    @endphp
                     <article class="menu-card"
                              data-cat="{{ $m['category'] }}"
                              data-name="{{ $m['name'] }}"
@@ -225,10 +232,8 @@
                             <div class="menu-oval">
                                 @if (!empty($m['image']))
                                     <img src="{{ $m['image'] }}" alt="{{ $m['name'] }}" loading="lazy">
-                                @elseif (in_array($m['category'], ['Kopi', 'Non-kopi']))
-                                    <svg width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 26h32v10a14 14 0 0 1-14 14h-4a14 14 0 0 1-14-14V26z"/><path d="M46 30h4a5 5 0 0 1 0 10h-5"/><path d="M24 8c-3 3 3 5 0 9M32 8c-3 3 3 5 0 9M40 8c-3 3 3 5 0 9"/></svg>
                                 @else
-                                    <svg width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="32" cy="32" r="15"/><circle cx="32" cy="32" r="8"/><path d="M8 14v14M12 14v14M8 21h4M10 28v22"/><path d="M56 14c-4 3-4 12 0 15v21"/></svg>
+                                    <div class="menu-visual-content" aria-hidden="true"></div>
                                 @endif
                             </div>
                             @if (!empty($m['badge']))
@@ -239,13 +244,38 @@
                         <h3 class="font-display text-[1.45rem] font-semibold leading-tight text-heading">{{ $m['name'] }}</h3>
                         <p class="text-sm text-muted">{{ $m['desc'] }}</p>
 
+                        @if ($variants->isNotEmpty())
+                            <div class="menu-variant-group" role="radiogroup" aria-label="Variant {{ $m['name'] }}">
+                                @foreach ($variants as $variant)
+                                    <label class="menu-variant-option">
+                                        <input
+                                            type="radio"
+                                            name="variant_{{ $m['id'] }}"
+                                            value="{{ $variant['id'] ?? $variant['name'] }}"
+                                            data-variant-id="{{ $variant['id'] ?? '' }}"
+                                            data-variant-name="{{ $variant['name'] }}"
+                                            data-variant-price="{{ $variant['price'] ?? $m['price'] }}"
+                                            {{ $loop->first ? 'checked' : '' }}
+                                            class="js-menu-variant-input"
+                                        >
+                                        <span>{{ $variant['name'] }}</span>
+                                        <small>Rp {{ number_format((float) ($variant['price'] ?? $m['price']), 0, ',', '.') }}</small>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+
                         <div class="mt-auto pt-4 flex items-end justify-between gap-2">
                             <div>
-                                <p class="font-medium text-heading">Rp {{ number_format($m['price'], 0, ',', '.') }}</p>
+                                <p class="font-medium text-heading js-menu-price">Rp {{ number_format((float) ($selectedVariant['price'] ?? $m['price']), 0, ',', '.') }}</p>
                                 <p class="eta">Sekitar {{ $m['eta'] }} menit</p>
                             </div>
                             <button type="button" class="add-btn js-add"
-                                    data-id="{{ $m['id'] }}" data-name="{{ $m['name'] }}" data-price="{{ $m['price'] }}"
+                                    data-id="{{ $m['id'] }}"
+                                    data-name="{{ $m['name'] }}"
+                                    data-price="{{ (float) ($selectedVariant['price'] ?? $m['price']) }}"
+                                    data-variant-id="{{ $selectedVariant['id'] ?? '' }}"
+                                    data-variant-name="{{ $selectedVariant['name'] ?? '' }}"
                                     aria-label="Tambah {{ $m['name'] }} ke keranjang">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                                 <span class="qty-bubble" hidden>0</span>

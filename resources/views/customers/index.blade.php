@@ -209,23 +209,31 @@
             renderCart();
         }
 
+        function getCartItemKey(menuId, variantId = null) {
+            return String(menuId) + ':' + String(variantId || 'base');
+        }
+
         function addToCart(id, name, price, variantId = null, variantName = null) {
             const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            const current = stored[id] || { id: String(id), name, price: Number(price), qty: 0, variant_id: variantId, variant_name: variantName };
+            const key = getCartItemKey(id, variantId);
+            const current = stored[key] || { key, id: String(id), name, price: Number(price), qty: 0, variant_id: variantId, variant_name: variantName };
             current.qty = Number(current.qty || 0) + 1;
             current.variant_id = variantId || current.variant_id || null;
             current.variant_name = variantName || current.variant_name || null;
             current.price = Number(price || current.price || 0);
-            stored[id] = current;
+            stored[key] = current;
             saveCart(stored);
         }
 
         function updateQuantity(id, delta) {
             const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            const item = stored[id];
+            const item = Object.values(stored).find(value => String(value.id) === String(id));
             if (!item) return;
-            item.qty = Math.max(0, Number(item.qty || 0) + delta);
-            if (item.qty <= 0) delete stored[id];
+            const key = getCartItemKey(item.id, item.variant_id);
+            const target = stored[key];
+            if (!target) return;
+            target.qty = Math.max(0, Number(target.qty || 0) + delta);
+            if (target.qty <= 0) delete stored[key];
             saveCart(stored);
         }
 
@@ -251,18 +259,19 @@
 
                 const row = document.createElement('div');
                 row.className = 'flex justify-between items-start border-b border-gray-200 pb-4';
+                const variantLabel = item.variant_name ? ` (${item.variant_name})` : '';
                 row.innerHTML = `
                     <div class="flex-1">
-                        <h4 class="font-semibold text-gray-800">${item.name}</h4>
+                        <h4 class="font-semibold text-gray-800">${item.name}${variantLabel}</h4>
                         <p class="text-blue-600 font-medium">${rupiah(price)}</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="flex items-center border border-gray-300 rounded">
-                            <button type="button" class="px-2 py-1 text-lg" data-action="decrease" data-id="${item.id}">-</button>
+                            <button type="button" class="px-2 py-1 text-lg" data-action="decrease" data-id="${item.id}" data-variant-id="${item.variant_id || 'base'}">-</button>
                             <span class="w-8 text-center">${qty}</span>
-                            <button type="button" class="px-2 py-1 text-lg" data-action="increase" data-id="${item.id}">+</button>
+                            <button type="button" class="px-2 py-1 text-lg" data-action="increase" data-id="${item.id}" data-variant-id="${item.variant_id || 'base'}">+</button>
                         </div>
-                        <button type="button" class="text-red-500 hover:text-red-700 ml-2" data-action="remove" data-id="${item.id}">✕</button>
+                        <button type="button" class="text-red-500 hover:text-red-700 ml-2" data-action="remove" data-id="${item.id}" data-variant-id="${item.variant_id || 'base'}">✕</button>
                     </div>
                 `;
                 list.appendChild(row);
@@ -281,10 +290,17 @@
                 button.addEventListener('click', function () {
                     const action = button.getAttribute('data-action');
                     const id = button.getAttribute('data-id');
+                    const variantId = button.getAttribute('data-variant-id');
                     if (!id) return;
-                    if (action === 'increase') updateQuantity(id, 1);
-                    if (action === 'decrease') updateQuantity(id, -1);
-                    if (action === 'remove') updateQuantity(id, -9999);
+                    const key = getCartItemKey(id, variantId === 'base' ? null : variantId);
+                    const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
+                    const target = stored[key];
+                    if (!target) return;
+                    if (action === 'increase') target.qty = Number(target.qty || 0) + 1;
+                    if (action === 'decrease') target.qty = Math.max(0, Number(target.qty || 0) - 1);
+                    if (action === 'remove') target.qty = 0;
+                    if (target.qty <= 0) delete stored[key];
+                    saveCart(stored);
                 });
             });
         }

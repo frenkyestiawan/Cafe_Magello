@@ -100,13 +100,27 @@
 
     /* ---------- Keranjang (front-end; sambungkan ke sistem pesanan Anda) ---------- */
     var KEY = 'magello-cart';
+    function getCartKey(menuId, variantId) {
+      return String(menuId) + ':' + String(variantId || 'base');
+    }
     var cart = {};
     try {
       var raw = JSON.parse(localStorage.getItem(KEY) || '{}');
       Object.keys(raw).forEach(function (k) {
         var it = raw[k];
         if (it && typeof it.name === 'string' && isFinite(it.price) && isFinite(it.qty) && it.qty > 0) {
-          cart[k] = { id: String(k), name: it.name, price: Number(it.price), qty: Math.floor(it.qty) };
+          var menuId = String(it.id || k.split(':')[0]);
+          var variantId = it.variant_id || (String(k).indexOf(':') > -1 ? k.split(':')[1] : null);
+          var itemKey = getCartKey(menuId, variantId);
+          cart[itemKey] = {
+            key: itemKey,
+            id: menuId,
+            name: it.name,
+            price: Number(it.price),
+            qty: Math.floor(it.qty),
+            variant_id: variantId || null,
+            variant_name: it.variant_name || null
+          };
         }
       });
     } catch (e) { cart = {}; }
@@ -121,7 +135,9 @@
           name: item.name,
           price: Number(item.price),
           quantity: Number(item.qty || item.quantity || 1),
-          qty: Number(item.qty || item.quantity || 1)
+          qty: Number(item.qty || item.quantity || 1),
+          variant_id: item.variant_id || null,
+          variant_name: item.variant_name || null
         };
       });
       return payload;
@@ -145,6 +161,20 @@
     var emptyBox = document.getElementById('cart-empty');
     var footer = document.getElementById('cart-footer');
 
+    function refreshMenuCardPrice(card) {
+      if (!card) return;
+      var selected = card.querySelector('.js-menu-variant-input:checked');
+      var priceEl = card.querySelector('.js-menu-price');
+      var addBtn = card.querySelector('.js-add');
+      if (!selected || !priceEl || !addBtn) return;
+
+      var price = Number(selected.getAttribute('data-variant-price') || addBtn.getAttribute('data-price') || 0);
+      priceEl.textContent = 'Rp ' + Number(price).toLocaleString('id-ID');
+      addBtn.setAttribute('data-price', String(price));
+      addBtn.setAttribute('data-variant-id', selected.getAttribute('data-variant-id') || '');
+      addBtn.setAttribute('data-variant-name', selected.getAttribute('data-variant-name') || '');
+    }
+
     function render() {
       var items = Object.keys(cart).map(function (k) { return cart[k]; });
       var n = 0, total = 0;
@@ -158,10 +188,14 @@
         el.textContent = rupiah(total);
       });
       Array.prototype.forEach.call(document.querySelectorAll('.js-add'), function (b) {
-        var it = cart[b.getAttribute('data-id')];
+        var menuId = b.getAttribute('data-id');
+        var aggregateQty = 0;
+        Object.keys(cart).forEach(function (key) {
+          if (String(cart[key].id) === String(menuId)) aggregateQty += Number(cart[key].qty || 0);
+        });
         var bub = b.querySelector('.qty-bubble');
         if (bub) {
-          if (it) { bub.textContent = it.qty; bub.hidden = false; }
+          if (aggregateQty > 0) { bub.textContent = aggregateQty; bub.hidden = false; }
           else { bub.hidden = true; }
         }
       });
@@ -172,16 +206,18 @@
           var row = document.createElement('div'); row.className = 'cart-row';
 
           var info = document.createElement('div');
-          var nm = document.createElement('p'); nm.className = 'font-medium text-heading'; nm.textContent = i.name;
+          var nm = document.createElement('p'); nm.className = 'font-medium text-heading';
+          var displayName = i.name + (i.variant_name ? ' (' + i.variant_name + ')' : '');
+          nm.textContent = displayName;
           var pr = document.createElement('p'); pr.className = 'text-sm text-muted'; pr.textContent = rupiah(i.price);
           info.appendChild(nm); info.appendChild(pr);
 
           var step = document.createElement('div'); step.className = 'stepper';
           var minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '-';
-          minus.setAttribute('aria-label', 'Kurangi ' + i.name); minus.setAttribute('data-act', 'dec'); minus.setAttribute('data-id', i.id);
+          minus.setAttribute('aria-label', 'Kurangi ' + displayName); minus.setAttribute('data-act', 'dec'); minus.setAttribute('data-key', i.key || getCartKey(i.id, i.variant_id));
           var q = document.createElement('span'); q.textContent = i.qty;
           var plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+';
-          plus.setAttribute('aria-label', 'Tambah ' + i.name); plus.setAttribute('data-act', 'inc'); plus.setAttribute('data-id', i.id);
+          plus.setAttribute('aria-label', 'Tambah ' + displayName); plus.setAttribute('data-act', 'inc'); plus.setAttribute('data-key', i.key || getCartKey(i.id, i.variant_id));
           step.appendChild(minus); step.appendChild(q); step.appendChild(plus);
 
           row.appendChild(info); row.appendChild(step);
@@ -195,8 +231,20 @@
       if (emptyBox) emptyBox.hidden = has;
     }
 
-    function add(id, name, price) {
-      if (cart[id]) { cart[id].qty += 1; } else { cart[id] = { id: id, name: name, price: price, qty: 1 }; }
+    function add(id, name, price, variantId, variantName) {
+      var key = getCartKey(id, variantId);
+      if (cart[key]) { cart[key].qty += 1; }
+      else {
+        cart[key] = {
+          key: key,
+          id: String(id),
+          name: name,
+          price: Number(price || 0),
+          qty: 1,
+          variant_id: variantId || null,
+          variant_name: variantName || null
+        };
+      }
       save(); syncCartToServer(); render();
     }
 
@@ -209,11 +257,22 @@
       toastTimer = setTimeout(function () { toast.classList.remove('is-on'); }, 1800);
     }
 
+    Array.prototype.forEach.call(document.querySelectorAll('.js-menu-variant-input'), function (input) {
+      input.addEventListener('change', function () {
+        refreshMenuCardPrice(input.closest('.menu-card'));
+      });
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('.js-add'), function (b) {
       b.addEventListener('click', function () {
+        var card = b.closest('.menu-card');
+        var selected = card ? card.querySelector('.js-menu-variant-input:checked') : null;
+        var variantId = selected ? selected.getAttribute('data-variant-id') : b.getAttribute('data-variant-id');
+        var variantName = selected ? selected.getAttribute('data-variant-name') : b.getAttribute('data-variant-name');
+        var price = selected ? Number(selected.getAttribute('data-variant-price')) : Number(b.getAttribute('data-price') || 0);
         var name = b.getAttribute('data-name');
-        add(b.getAttribute('data-id'), name, Number(b.getAttribute('data-price')));
-        showToast(name + ' ditambahkan');
+        add(b.getAttribute('data-id'), name, price, variantId, variantName);
+        showToast(name + (variantName ? ' (' + variantName + ')' : '') + ' ditambahkan');
       });
     });
 
@@ -221,10 +280,10 @@
       list.addEventListener('click', function (e) {
         var btn = e.target.closest('button[data-act]');
         if (!btn) return;
-        var id = btn.getAttribute('data-id');
-        if (!cart[id]) return;
-        if (btn.getAttribute('data-act') === 'inc') { cart[id].qty += 1; }
-        else { cart[id].qty -= 1; if (cart[id].qty <= 0) delete cart[id]; }
+        var key = btn.getAttribute('data-key');
+        if (!key || !cart[key]) return;
+        if (btn.getAttribute('data-act') === 'inc') { cart[key].qty += 1; }
+        else { cart[key].qty -= 1; if (cart[key].qty <= 0) delete cart[key]; }
         save(); syncCartToServer(); render();
       });
     }
