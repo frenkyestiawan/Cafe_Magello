@@ -75,6 +75,7 @@ Route::middleware(['auth', 'role:kitchen'])
 Route::get('/order/select-table', [OrderController::class, 'selectTable'])->name('order.select-table');
 Route::get('/order/table/{tableNumber}', [OrderController::class, 'orderWithTable'])->name('order.with-table');
 Route::get('/order', [OrderController::class, 'index'])->name('order.index');
+Route::post('/order/sync-cart', [OrderController::class, 'syncCart'])->name('order.sync-cart');
 Route::get('/order/checkout', [OrderController::class, 'checkout'])->name('order.checkout');
 Route::post('/order/add-to-cart', [OrderController::class, 'addToCart'])->name('order.add-to-cart');
 Route::post('/order/update-cart', [OrderController::class, 'updateCart'])->name('order.update-cart');

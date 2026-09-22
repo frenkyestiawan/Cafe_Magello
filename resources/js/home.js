@@ -111,6 +111,34 @@
       });
     } catch (e) { cart = {}; }
     function save() { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (e) {} }
+    function normalizeCartForServer() {
+      var payload = {};
+      Object.keys(cart).forEach(function (id) {
+        var item = cart[id];
+        if (!item) return;
+        payload[id] = {
+          id: String(item.id),
+          name: item.name,
+          price: Number(item.price),
+          quantity: Number(item.qty || item.quantity || 1),
+          qty: Number(item.qty || item.quantity || 1)
+        };
+      });
+      return payload;
+    }
+    function syncCartToServer() {
+      var token = document.querySelector('meta[name="csrf-token"]');
+      if (!token) return;
+      fetch('/order/sync-cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': token.getAttribute('content'),
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ cart: normalizeCartForServer() })
+      }).catch(function () {});
+    }
     function rupiah(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
 
     var list = document.getElementById('cart-list');
@@ -169,7 +197,7 @@
 
     function add(id, name, price) {
       if (cart[id]) { cart[id].qty += 1; } else { cart[id] = { id: id, name: name, price: price, qty: 1 }; }
-      save(); render();
+      save(); syncCartToServer(); render();
     }
 
     var toast = document.getElementById('toast');
@@ -197,12 +225,12 @@
         if (!cart[id]) return;
         if (btn.getAttribute('data-act') === 'inc') { cart[id].qty += 1; }
         else { cart[id].qty -= 1; if (cart[id].qty <= 0) delete cart[id]; }
-        save(); render();
+        save(); syncCartToServer(); render();
       });
     }
     var cartClear = document.getElementById('cart-clear');
     if (cartClear) {
-      cartClear.addEventListener('click', function () { cart = {}; save(); render(); });
+      cartClear.addEventListener('click', function () { cart = {}; save(); syncCartToServer(); render(); });
     }
 
     /* ---------- Drawer ---------- */

@@ -62,6 +62,38 @@ class OrderController extends Controller
         return view('customers.checkout', compact('cart', 'subtotal'));
     }
 
+    public function syncCart(Request $request)
+    {
+        $cart = $request->input('cart', []);
+        $normalized = [];
+
+        foreach ((array) $cart as $menuId => $item) {
+            $quantity = (int) ($item['quantity'] ?? $item['qty'] ?? 0);
+            if ($quantity <= 0) {
+                continue;
+            }
+
+            $id = (int) ($item['id'] ?? $menuId);
+            $menu = Menu::find($id);
+
+            $normalized[$id] = [
+                'id' => $id,
+                'name' => $item['name'] ?? $menu?->name ?? 'Menu',
+                'price' => (float) ($item['price'] ?? $menu?->price ?? 0),
+                'quantity' => $quantity,
+                'level' => $item['level'] ?? null,
+                'notes' => $item['notes'] ?? null,
+            ];
+        }
+
+        session(['cart' => $normalized]);
+
+        return response()->json([
+            'success' => true,
+            'cart' => $normalized,
+        ]);
+    }
+
     public function addToCart(Request $request)
     {
         $menuId = $request->input('menu_id');
