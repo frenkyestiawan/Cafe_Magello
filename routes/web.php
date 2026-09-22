@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\AdminAuthController;
@@ -15,15 +16,16 @@ use App\Models\Menu;
 Route::get('/', function () {
     $menus = Menu::with('category')
         ->where('is_available', true)
+        ->orderBy('name')
         ->get()
         ->map(function ($menu) {
             return [
                 'id' => $menu->id,
                 'name' => $menu->name,
-                'price' => $menu->price,
+                'price' => (float) $menu->price,
                 'category' => $menu->category?->name ?? 'Lainnya',
-                'desc' => $menu->description,
-                'image' => $menu->image ?? '',
+                'desc' => $menu->description ?? 'Menu pilihan Magello.',
+                'image' => $menu->image ? Storage::url($menu->image) : '',
                 'badge' => null,
                 'eta' => 10,
             ];
