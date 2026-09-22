@@ -2,20 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\RestaurantTable;
+use Illuminate\Database\Seeder;
 
 class RestaurantTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Hapus semua meja yang ada untuk fresh start
-        RestaurantTable::query()->delete();
-        
         $tables = [
             ['table_number' => '01', 'capacity' => 2, 'is_available' => true],
             ['table_number' => '02', 'capacity' => 2, 'is_available' => true],
@@ -26,17 +19,24 @@ class RestaurantTableSeeder extends Seeder
         ];
 
         foreach ($tables as $tableData) {
-            $createdTable = RestaurantTable::create($tableData);
-            
-            // Generate QR Code URL
-            $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $createdTable->table_number;
+            $table = RestaurantTable::firstOrCreate(
+                ['table_number' => $tableData['table_number']],
+                [
+                    'capacity' => $tableData['capacity'],
+                    'is_available' => $tableData['is_available'],
+                ]
+            );
+
+            $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $table->table_number;
             $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
-            
-            // Update with QR Code
-            $createdTable->qr_code = $qrCodeApiUrl;
-            $createdTable->save();
-            
-            echo "Meja {$createdTable->table_number} - QR Code: {$qrCodeApiUrl}\n";
+
+            $table->update([
+                'capacity' => $tableData['capacity'],
+                'is_available' => $tableData['is_available'],
+                'qr_code' => $qrCodeApiUrl,
+            ]);
+
+            echo "Meja {$table->table_number} - QR Code: {$qrCodeApiUrl}\n";
         }
     }
 }
