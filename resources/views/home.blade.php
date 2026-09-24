@@ -201,13 +201,26 @@
                 <p class="mt-3 text-muted">Pilihan yang paling sering dipesan. Daftar lengkap tersedia saat Anda memesan.</p>
             </div>
 
-            <div class="mt-10 flex flex-col md:flex-row md:items-center gap-4 md:justify-between">
-                <div class="flex flex-wrap gap-2" role="group" aria-label="Filter kategori">
-                    @foreach ($categories as $cat)
-                        <button type="button" class="chip js-chip" data-cat="{{ $cat }}" aria-pressed="{{ $loop->first ? 'true' : 'false' }}">{{ $cat }}</button>
-                    @endforeach
+            <div class="mt-10 flex flex-col md:flex-row md:items-center gap-4 justify-between min-w-0">
+                <div class="category-slider-container flex-1 min-w-0 flex items-center gap-2">
+                    <button type="button" class="slider-arrow js-slider-prev" aria-label="Geser kategori ke kiri">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+
+                    <div class="category-scroll-wrap" role="group" aria-label="Filter kategori" style="flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+                        <div class="category-scroll-inner" style="display: flex !important; flex-wrap: nowrap !important; align-items: center; gap: 0.55rem; white-space: nowrap; width: max-content; min-width: max-content;">
+                            @foreach ($categories as $cat)
+                                <button type="button" class="chip js-chip" style="flex: 0 0 auto !important; white-space: nowrap !important;" data-cat="{{ $cat }}" aria-pressed="{{ $loop->first ? 'true' : 'false' }}">{{ $cat }}</button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <button type="button" class="slider-arrow js-slider-next" aria-label="Geser kategori ke kanan">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
                 </div>
-                <div class="search-box md:w-72">
+
+                <div class="search-box md:w-72" style="flex-shrink: 0;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input id="menu-search" type="search" placeholder="Cari menu" aria-label="Cari menu" autocomplete="off">
                 </div>

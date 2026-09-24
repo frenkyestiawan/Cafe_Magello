@@ -93,10 +93,59 @@
       chip.addEventListener('click', function () {
         activeCat = chip.getAttribute('data-cat');
         chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+        try {
+          chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } catch (e) {}
         applyFilter();
       });
     });
     if (search) search.addEventListener('input', applyFilter);
+
+    /* ---------- Controls Slider Kategori (Tombol Panah, Drag Mouse, & Wheel) ---------- */
+    var scrollWrap = document.querySelector('.category-scroll-wrap');
+    var prevBtn = document.querySelector('.js-slider-prev');
+    var nextBtn = document.querySelector('.js-slider-next');
+
+    if (scrollWrap) {
+      if (prevBtn) {
+        prevBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          scrollWrap.scrollBy({ left: -220, behavior: 'smooth' });
+        });
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          scrollWrap.scrollBy({ left: 220, behavior: 'smooth' });
+        });
+      }
+
+      var isDown = false;
+      var startX = 0;
+      var scrollLeft = 0;
+
+      scrollWrap.addEventListener('mousedown', function (e) {
+        isDown = true;
+        startX = e.pageX - scrollWrap.offsetLeft;
+        scrollLeft = scrollWrap.scrollLeft;
+      });
+      document.addEventListener('mouseup', function () { isDown = false; });
+      scrollWrap.addEventListener('mouseleave', function () { isDown = false; });
+      scrollWrap.addEventListener('mousemove', function (e) {
+        if (!isDown) return;
+        e.preventDefault();
+        var x = e.pageX - scrollWrap.offsetLeft;
+        var walk = (x - startX) * 1.5;
+        scrollWrap.scrollLeft = scrollLeft - walk;
+      });
+
+      scrollWrap.addEventListener('wheel', function (e) {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          scrollWrap.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+    }
 
     /* ---------- Keranjang (front-end; sambungkan ke sistem pesanan Anda) ---------- */
     var KEY = 'magello-cart';
