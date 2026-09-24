@@ -1,55 +1,51 @@
-@extends('layouts.customer')
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Scan QR Meja - Magello Cafe</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
 
-@section('title', 'Scan QR Meja - Cafe Magello')
+    <script>
+        try {
+            var t = localStorage.getItem('magello-theme');
+            document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        } catch (e) {}
+    </script>
 
-@section('content')
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    @vite(['resources/css/customers.css', 'resources/js/customers.js'])
+
     <style>
-        /* ---------- Palet: Light (default) ---------- */
+        /* ---------- Palet Warna Pemindai Scan ---------- */
         :root {
-            --scan-bg: #FDF8F2;          /* Warm Cream */
-            --scan-frame: #FFFFFF;       /* Pure White */
-            --scan-edge: #4A2E2B;        /* Deep Coffee Brown */
-            --scan-text: #2B1B17;        /* Dark Espresso Brown */
-            --scan-muted: #6E5A53;
-            --scan-btn: #4A2E2B;
-            --scan-btn-text: #FDF8F2;
-            --scan-btn-edge: #4A2E2B;
-            --scan-accent: #F97316;      /* oranye brand Magello: sudut bingkai + garis scan */
+            --scan-bg: var(--bg, #FDF8F2);
+            --scan-frame: var(--surface, #FFFFFF);
+            --scan-edge: var(--heading, #4A2E2B);
+            --scan-text: var(--ink, #2B1B17);
+            --scan-muted: var(--muted, #6E5A53);
+            --scan-btn: var(--heading, #4A2E2B);
+            --scan-btn-text: var(--bg, #FDF8F2);
+            --scan-btn-edge: var(--line, #4A2E2B);
+            --scan-accent: #F97316;
             --scan-ok: #2F7D4F;
-            --scan-error-bg: #FEF2F2;
+            --scan-error-bg: rgba(185, 28, 28, 0.1);
             --scan-error-text: #B91C1C;
-            --scan-error-edge: #FECACA;
+            --scan-error-edge: rgba(185, 28, 28, 0.3);
         }
 
-        /* ---------- Palet: Dark ----------
-           Aktif mengikuti pengaturan HP/OS, atau class "dark" di <html>.
-           Kalau layout Anda belum mendukung dark mode, hapus blok @media di bawah ini. */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --scan-bg: #1A1412;      /* Dark Mocha */
-                --scan-frame: #2A1E1B;   /* Dark Chocolate */
-                --scan-edge: #E6C594;    /* Warm Gold */
-                --scan-text: #E6C594;
-                --scan-muted: #B79F7C;
-                --scan-btn: #2A1E1B;
-                --scan-btn-text: #E6C594;
-                --scan-btn-edge: rgba(230, 197, 148, .35);
-                --scan-accent: #E6C594;
-                --scan-ok: #8FD19E;
-                --scan-error-bg: #2E1716;
-                --scan-error-text: #FCA5A5;
-                --scan-error-edge: #5B2724;
-            }
-        }
-        html.dark {
-            --scan-bg: #1A1412;
-            --scan-frame: #2A1E1B;
-            --scan-edge: #E6C594;
-            --scan-text: #E6C594;
-            --scan-muted: #B79F7C;
-            --scan-btn: #2A1E1B;
-            --scan-btn-text: #E6C594;
-            --scan-btn-edge: rgba(230, 197, 148, .35);
+        [data-theme="dark"] {
+            --scan-bg: var(--bg, #1A1412);
+            --scan-frame: var(--surface, #2A1E1B);
+            --scan-edge: var(--heading, #E6C594);
+            --scan-text: var(--ink, #E6C594);
+            --scan-muted: var(--muted, #B79F7C);
+            --scan-btn: var(--surface, #2A1E1B);
+            --scan-btn-text: var(--heading, #E6C594);
+            --scan-btn-edge: var(--line, rgba(230, 197, 148, .35));
             --scan-accent: #E6C594;
             --scan-ok: #8FD19E;
             --scan-error-bg: #2E1716;
@@ -57,16 +53,11 @@
             --scan-error-edge: #5B2724;
         }
 
-        /* Background seluruh halaman mengikuti palet scan */
-        body:has(.scan-page) {
-            background: var(--scan-bg) !important;
-        }
-
         .scan-page {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2.5rem 1.25rem 3rem;
+            padding: 2rem 1.25rem 3.5rem;
             color: var(--scan-text);
             text-align: center;
         }
@@ -77,6 +68,7 @@
             line-height: 1.15;
             font-weight: 700;
             letter-spacing: -0.02em;
+            color: var(--heading);
         }
 
         .scan-sub {
@@ -109,9 +101,10 @@
             border-radius: 1.75rem;
             background: var(--scan-frame);
             border: 2px solid var(--scan-edge);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
 
-        /* Reset gaya bawaan html5-qrcode: tanpa border, padding, atau overlay gelap */
+        /* Reset gaya html5-qrcode */
         #qr-reader {
             position: absolute;
             inset: 0;
@@ -146,7 +139,6 @@
         .scan-corner--bl { bottom: .875rem; left: .875rem; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 1rem; }
         .scan-corner--br { bottom: .875rem; right: .875rem; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 1rem; }
 
-        /* Garis scan: satu-satunya gerakan di halaman ini */
         .scan-line {
             position: absolute;
             left: 1.25rem;
@@ -190,7 +182,6 @@
         .scan-overlay strong { font-size: 1.125rem; }
         .scan-overlay p { margin: 0; font-size: .9rem; line-height: 1.45; color: var(--scan-muted); max-width: 16rem; }
 
-        /* ---------- Status & tombol ---------- */
         .scan-status {
             margin: 1.25rem 0 0;
             min-height: 1.5rem;
@@ -235,7 +226,42 @@
             .scan-btn { transition: none; }
         }
     </style>
+</head>
+<body>
 
+{{-- Sprite ikon --}}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-utensils" viewBox="0 0 24 24"><path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 21V3c-2 1-3 4-3 8h3"/></symbol>
+</svg>
+
+{{-- ============ Navbar ============ --}}
+<header class="navbar">
+    <div class="container navbar-inner">
+        <a href="{{ route('home') }}" class="brand" aria-label="Magello, ke halaman utama">
+            <span class="brand-mark"><svg class="icon"><use href="#i-utensils"/></svg></span>
+            Magello
+        </a>
+
+        <nav class="nav-links" aria-label="Navigasi utama">
+            <a href="{{ route('home') }}">Home</a>
+            <a href="{{ route('order.index') }}">Menu</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button type="button" class="theme-switch" role="switch" aria-checked="true" aria-label="Mode gelap" data-theme-toggle>
+                <span class="knob">
+                    <svg class="icon i-moon"><use href="#i-moon"/></svg>
+                    <svg class="icon i-sun"><use href="#i-sun"/></svg>
+                </span>
+            </button>
+            <a href="{{ route('order.index') }}" class="btn">Lihat Menu</a>
+        </div>
+    </div>
+</header>
+
+<main class="container">
     <div class="scan-page">
         <h1 class="scan-title">Scan QR meja</h1>
         <p class="scan-sub">Arahkan kamera ke QR Code yang ada di meja Anda. Meja akan terpilih otomatis.</p>
@@ -293,214 +319,201 @@
             <input type="hidden" name="table_number" id="table_number">
         </form>
     </div>
+</main>
 
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script>
-        (function () {
-            var frame = document.getElementById('scan-frame');
-            var statusEl = document.getElementById('scan-status');
-            var errorText = document.getElementById('scan-error-text');
-            var okText = document.getElementById('scan-ok-text');
-            var retryBtn = document.getElementById('scan-retry');
-            var torchBtn = document.getElementById('scan-torch');
-            var switchBtn = document.getElementById('scan-switch');
-            var form = document.getElementById('table-form');
-            var tableInput = document.getElementById('table_number');
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    (function () {
+        var frame = document.getElementById('scan-frame');
+        var statusEl = document.getElementById('scan-status');
+        var errorText = document.getElementById('scan-error-text');
+        var okText = document.getElementById('scan-ok-text');
+        var retryBtn = document.getElementById('scan-retry');
+        var torchBtn = document.getElementById('scan-torch');
+        var switchBtn = document.getElementById('scan-switch');
+        var form = document.getElementById('table-form');
+        var tableInput = document.getElementById('table_number');
 
-            var scanner = null;
-            var facing = 'environment';
-            var torchFeature = null;
-            var torchOn = false;
-            var busy = false;
-            var handled = false;
-            var invalidTimer = null;
-            var navTimer = null;
+        var scanner = null;
+        var facing = 'environment';
+        var torchFeature = null;
+        var torchOn = false;
+        var busy = false;
+        var handled = false;
+        var invalidTimer = null;
+        var navTimer = null;
 
-            function setState(state, message) {
-                frame.dataset.state = state;
-                if (message) statusEl.textContent = message;
+        function setState(state, message) {
+            frame.dataset.state = state;
+            if (message) statusEl.textContent = message;
+        }
+
+        function extractTable(text) {
+            text = String(text || '').trim();
+            if (/^\d{1,3}$/.test(text)) return text;
+
+            try {
+                var url = new URL(text, window.location.origin);
+                var keys = ['table', 'table_number', 'meja', 'no_meja'];
+                for (var i = 0; i < keys.length; i++) {
+                    var v = url.searchParams.get(keys[i]);
+                    if (v) return v;
+                }
+                var m = url.pathname.match(/(?:table|meja)\/([A-Za-z0-9-]+)/i);
+                if (m) return m[1];
+            } catch (e) {}
+
+            var t = text.match(/(?:meja|table)\s*[-_:#]?\s*(\d+)/i);
+            return t ? t[1] : null;
+        }
+
+        function resolveDestination(text) {
+            try {
+                var url = new URL(text);
+                if (/^https?:$/.test(url.protocol) && /\/(order|menu|meja|table)(\/|$)/i.test(url.pathname)) {
+                    return {
+                        type: 'url',
+                        href: window.location.origin + url.pathname + url.search + url.hash,
+                        table: extractTable(text)
+                    };
+                }
+            } catch (e) {}
+
+            var table = extractTable(text);
+            return table ? { type: 'table', table: table } : null;
+        }
+
+        function onScanSuccess(decodedText) {
+            if (handled) return;
+            var text = String(decodedText || '').trim();
+            var dest = resolveDestination(text);
+
+            if (!dest) {
+                setState('scanning', 'QR Code ini bukan QR meja Magello. Coba QR yang lain.');
+                clearTimeout(invalidTimer);
+                invalidTimer = setTimeout(function () {
+                    if (!handled) setState('scanning', 'Arahkan kamera ke QR Code di meja.');
+                }, 2500);
+                return;
             }
 
-            /* Ambil nomor meja dari isi QR. Mendukung:
-               - angka langsung            -> "5"
-               - URL dengan query           -> ?table=5 / ?meja=5 / ?table_number=5
-               - URL dengan path            -> /table/5 atau /meja/5
-               - teks                       -> "Meja 5"
-               Sesuaikan jika format QR Anda berbeda. */
-            function extractTable(text) {
-                text = String(text || '').trim();
-                if (/^\d{1,3}$/.test(text)) return text;
+            handled = true;
+            if (navigator.vibrate) navigator.vibrate(60);
+            var label = dest.table ? 'Meja ' + dest.table + ' terdeteksi' : 'QR Code terdeteksi';
+            okText.textContent = label;
+            setState('success', label);
 
+            setTimeout(function () {
                 try {
-                    var url = new URL(text, window.location.origin);
-                    var keys = ['table', 'table_number', 'meja', 'no_meja'];
-                    for (var i = 0; i < keys.length; i++) {
-                        var v = url.searchParams.get(keys[i]);
-                        if (v) return v;
+                    if (dest.type === 'url') {
+                        window.location.assign(dest.href);
+                    } else {
+                        tableInput.value = dest.table;
+                        form.submit();
                     }
-                    var m = url.pathname.match(/(?:table|meja)\/([A-Za-z0-9-]+)/i);
-                    if (m) return m[1];
-                } catch (e) { /* bukan URL */ }
-
-                var t = text.match(/(?:meja|table)\s*[-_:#]?\s*(\d+)/i);
-                return t ? t[1] : null;
-            }
-
-            /* Tentukan tujuan dari isi QR:
-               - link berisi /order, /menu, /meja atau /table -> langsung dibuka.
-                 Yang dipakai hanya path + query-nya, domainnya diganti domain yang sedang
-                 dibuka (jadi tetap jalan walau QR dicetak dari localhost / domain lain).
-               - selain itu -> ambil nomor meja lalu kirim ke order.set-table. */
-            function resolveDestination(text) {
-                try {
-                    var url = new URL(text);
-                    if (/^https?:$/.test(url.protocol) && /\/(order|menu|meja|table)(\/|$)/i.test(url.pathname)) {
-                        return {
-                            type: 'url',
-                            href: window.location.origin + url.pathname + url.search + url.hash,
-                            table: extractTable(text)
-                        };
-                    }
-                } catch (e) { /* bukan URL */ }
-
-                var table = extractTable(text);
-                return table ? { type: 'table', table: table } : null;
-            }
-
-            function onScanSuccess(decodedText) {
-                if (handled) return;
-                var text = String(decodedText || '').trim();
-                var dest = resolveDestination(text);
-
-                if (!dest) {
-                    setState('scanning', 'QR Code ini bukan QR meja Magello. Coba QR yang lain.');
-                    clearTimeout(invalidTimer);
-                    invalidTimer = setTimeout(function () {
-                        if (!handled) setState('scanning', 'Arahkan kamera ke QR Code di meja.');
-                    }, 2500);
-                    return;
+                } catch (e) {
+                    showNavFailure(text);
                 }
+            }, 250);
+            try { scanner.stop().catch(function () {}); } catch (e) {}
 
-                handled = true;
-                if (navigator.vibrate) navigator.vibrate(60);
-                var label = dest.table ? 'Meja ' + dest.table + ' terdeteksi' : 'QR Code terdeteksi';
-                okText.textContent = label;
-                setState('success', label);
+            navTimer = setTimeout(function () { showNavFailure(text); }, 5000);
+        }
 
-                // Pindah halaman tanpa menunggu kamera berhenti (stop() bisa macet di beberapa browser)
-                setTimeout(function () {
-                    try {
-                        if (dest.type === 'url') {
-                            window.location.assign(dest.href);
-                        } else {
-                            tableInput.value = dest.table;
-                            form.submit();
-                        }
-                    } catch (e) {
-                        showNavFailure(text);
-                    }
-                }, 250);
-                try { scanner.stop().catch(function () {}); } catch (e) {}
+        function showNavFailure(text) {
+            errorText.textContent = 'Halaman tidak berpindah. Isi QR: ' + text.slice(0, 120);
+            setState('error', 'Gagal membuka menu.');
+        }
 
-                // Jaring pengaman: jika 5 detik masih di halaman ini, tampilkan isi QR agar mudah dilacak
-                navTimer = setTimeout(function () { showNavFailure(text); }, 5000);
-            }
+        function describeError(err) {
+            var name = err && err.name ? err.name : '';
+            var msg = String(err || '');
 
-            function showNavFailure(text) {
-                errorText.textContent = 'Halaman tidak berpindah. Isi QR: ' + text.slice(0, 120);
-                setState('error', 'Gagal membuka menu.');
-            }
+            if (!window.isSecureContext) return 'Kamera hanya bisa dipakai lewat koneksi aman (HTTPS).';
+            if (name === 'NotAllowedError' || /permission|denied/i.test(msg)) return 'Akses kamera ditolak. Izinkan kamera di pengaturan browser, lalu coba lagi.';
+            if (name === 'NotFoundError' || /no camera|not found/i.test(msg)) return 'Kamera tidak ditemukan di perangkat ini.';
+            if (name === 'NotReadableError') return 'Kamera sedang dipakai aplikasi lain. Tutup aplikasi itu, lalu coba lagi.';
+            return 'Terjadi kendala saat membuka kamera. Coba lagi.';
+        }
 
-            function describeError(err) {
-                var name = err && err.name ? err.name : '';
-                var msg = String(err || '');
+        function setupTorch() {
+            torchBtn.hidden = true;
+            torchOn = false;
+            torchBtn.setAttribute('aria-pressed', 'false');
+            try {
+                torchFeature = scanner.getRunningTrackCameraCapabilities().torchFeature();
+                if (torchFeature.isSupported()) torchBtn.hidden = false;
+            } catch (e) { torchFeature = null; }
+        }
 
-                if (!window.isSecureContext) return 'Kamera hanya bisa dipakai lewat koneksi aman (HTTPS).';
-                if (name === 'NotAllowedError' || /permission|denied/i.test(msg)) return 'Akses kamera ditolak. Izinkan kamera di pengaturan browser, lalu coba lagi.';
-                if (name === 'NotFoundError' || /no camera|not found/i.test(msg)) return 'Kamera tidak ditemukan di perangkat ini.';
-                if (name === 'NotReadableError') return 'Kamera sedang dipakai aplikasi lain. Tutup aplikasi itu, lalu coba lagi.';
-                return 'Terjadi kendala saat membuka kamera. Coba lagi.';
-            }
+        function start() {
+            if (busy) return Promise.resolve();
+            busy = true;
+            handled = false;
+            clearTimeout(navTimer);
+            setState('starting', 'Menyiapkan kamera…');
 
-            function setupTorch() {
-                torchBtn.hidden = true;
-                torchOn = false;
-                torchBtn.setAttribute('aria-pressed', 'false');
-                try {
-                    torchFeature = scanner.getRunningTrackCameraCapabilities().torchFeature();
-                    if (torchFeature.isSupported()) torchBtn.hidden = false;
-                } catch (e) { torchFeature = null; }
-            }
-
-            function start() {
-                if (busy) return Promise.resolve();
-                busy = true;
-                handled = false;
-                clearTimeout(navTimer);
-                setState('starting', 'Menyiapkan kamera…');
-
-                if (typeof Html5Qrcode === 'undefined') {
-                    errorText.textContent = 'Pemindai gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.';
-                    setState('error', 'Pemindai gagal dimuat.');
-                    busy = false;
-                    return Promise.resolve();
-                }
-
-                if (!scanner) {
-                    scanner = new Html5Qrcode('qr-reader', {
-                        verbose: false,
-                        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
-                    });
-                }
-
-                // Tanpa "qrbox" -> seluruh frame dipindai dan tidak ada overlay gelap dari library.
-                return scanner
-                    .start({ facingMode: facing }, { fps: 12, aspectRatio: 1 }, onScanSuccess, function () {})
-                    .then(function () {
-                        setState('scanning', 'Arahkan kamera ke QR Code di meja.');
-                        setupTorch();
-                    })
-                    .catch(function (err) {
-                        errorText.textContent = describeError(err);
-                        setState('error', 'Kamera belum bisa dipakai.');
-                    })
-                    .then(function () { busy = false; });
-            }
-
-            function stop() {
-                if (scanner && scanner.isScanning) {
-                    return scanner.stop().catch(function () {});
-                }
+            if (typeof Html5Qrcode === 'undefined') {
+                errorText.textContent = 'Pemindai gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.';
+                setState('error', 'Pemindai gagal dimuat.');
+                busy = false;
                 return Promise.resolve();
             }
 
-            retryBtn.addEventListener('click', start);
+            if (!scanner) {
+                scanner = new Html5Qrcode('qr-reader', {
+                    verbose: false,
+                    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+                });
+            }
 
-            switchBtn.addEventListener('click', function () {
-                if (busy) return;
-                facing = facing === 'environment' ? 'user' : 'environment';
-                stop().then(start);
-            });
+            return scanner
+                .start({ facingMode: facing }, { fps: 12, aspectRatio: 1 }, onScanSuccess, function () {})
+                .then(function () {
+                    setState('scanning', 'Arahkan kamera ke QR Code di meja.');
+                    setupTorch();
+                })
+                .catch(function (err) {
+                    errorText.textContent = describeError(err);
+                    setState('error', 'Kamera belum bisa dipakai.');
+                })
+                .then(function () { busy = false; });
+        }
 
-            torchBtn.addEventListener('click', function () {
-                if (!torchFeature) return;
-                torchOn = !torchOn;
-                torchFeature.apply(torchOn)
-                    .then(function () { torchBtn.setAttribute('aria-pressed', String(torchOn)); })
-                    .catch(function () { torchOn = !torchOn; });
-            });
+        function stop() {
+            if (scanner && scanner.isScanning) {
+                return scanner.stop().catch(function () {});
+            }
+            return Promise.resolve();
+        }
 
-            // Matikan kamera saat halaman ditutup / berpindah tab
-            window.addEventListener('pagehide', stop);
-            document.addEventListener('visibilitychange', function () {
-                if (document.hidden) {
-                    stop();
-                } else if (!handled && frame.dataset.state !== 'error') {
-                    start();
-                }
-            });
+        retryBtn.addEventListener('click', start);
 
-            start();
-        })();
-    </script>
-@endsection
+        switchBtn.addEventListener('click', function () {
+            if (busy) return;
+            facing = facing === 'environment' ? 'user' : 'environment';
+            stop().then(start);
+        });
+
+        torchBtn.addEventListener('click', function () {
+            if (!torchFeature) return;
+            torchOn = !torchOn;
+            torchFeature.apply(torchOn)
+                .then(function () { torchBtn.setAttribute('aria-pressed', String(torchOn)); })
+                .catch(function () { torchOn = !torchOn; });
+        });
+
+        window.addEventListener('pagehide', stop);
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                stop();
+            } else if (!handled && frame.dataset.state !== 'error') {
+                start();
+            }
+        });
+
+        start();
+    })();
+</script>
+</body>
+</html>
