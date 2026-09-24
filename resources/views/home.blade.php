@@ -50,21 +50,21 @@
 
     <!-- ===================== NAVBAR ===================== -->
     <nav class="site-nav" aria-label="Navigasi utama">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 relative">
 
-            <a href="#beranda" class="flex items-center gap-2.5" aria-label="Magello Hangout Space, ke awal halaman">
+            <a href="#beranda" class="flex items-center gap-2.5 z-10" aria-label="Magello Hangout Space, ke awal halaman">
                 <img src="{{ asset('images/logo-icon.png') }}" alt="" width="30" height="40" class="h-10 w-auto">
                 <span class="font-display text-2xl font-semibold tracking-wide text-heading">Magello</span>
             </a>
 
-            <div class="hidden md:flex items-center gap-7">
+            <div class="hidden md:flex items-center gap-7 absolute left-1/2 -translate-x-1/2 z-0">
                 <a href="#menu" class="nav-link">Menu</a>
                 <a href="#tentang" class="nav-link">Tentang</a>
                 <a href="#lokasi" class="nav-link">Lokasi</a>
                 <a href="{{ $trackUrl }}" class="nav-link">Cek Pesanan</a>
             </div>
 
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2.5 z-10 ml-auto">
                 <span class="pill hidden lg:inline-flex js-status" data-state="closed">
                     <span class="dot"></span><span class="js-status-label">Memeriksa jam buka</span>
                 </span>
