@@ -227,7 +227,7 @@
         }
     </style>
 </head>
-<body>
+<body-bg class="page-bg page-select-table">
 
 {{-- Sprite ikon --}}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
