@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderDetail;
+
 use App\Models\Menu;
+use App\Models\Category;
 use App\Models\RestaurantTable;
 
 class OrderController extends Controller
@@ -13,8 +15,17 @@ class OrderController extends Controller
     public function index()
     {
         $tableId = session('table_id');
-        $menus = Menu::where('is_available', true)->get();
-        $categories = Menu::select('category_id')->distinct()->get();
+
+        $menus = Menu::with(['category', 'variants'])
+            ->where('is_available', true)
+            ->orderBy('name')
+            ->get();
+
+        $categories = Category::whereHas('menus', function ($query) {
+                $query->where('is_available', true);
+            })
+            ->orderBy('name')
+            ->get();
 
         $cart = session('cart', []);
         $subtotal = collect($cart)->sum(function ($item) {
@@ -23,6 +34,7 @@ class OrderController extends Controller
 
         return view('customers.index', compact('menus', 'categories', 'cart', 'subtotal', 'tableId'));
     }
+
 
     public function selectTable()
     {

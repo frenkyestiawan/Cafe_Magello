@@ -1,361 +1,629 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Order - Magello Cafe</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Pesan Menu - Magello Cafe</title>
+
+    {{-- Terapkan tema sebelum render agar tidak berkedip. Default: gelap (sesuai mockup). --}}
+    <script>
+        try {
+            var t = localStorage.getItem('magello-theme');
+            document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        } catch (e) {}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+@vite(['resources/css/magello.css', 'resources/css/order.css', 'resources/js/magello.js'])
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold text-orange-600">Magello</a>
-                </div>
-                <div>
-                    <a href="{{ route('home') }}" class="text-gray-600 hover:text-orange-600 text-sm font-medium">
-                        Kembali ke Home
-                    </a>
-                </div>
+<body>
+@php
+    // ---- Data pendukung tampilan (tanpa mengubah controller) ----
+    $table = $tableId ? \App\Models\RestaurantTable::find($tableId) : null;
+    $tableLabel = $table ? $table->table_number : $tableId;
+
+    // Kategori: pakai $categories dari controller bila ada, kalau tidak pakai daftar lama.
+    $categories = $categories ?? collect([
+        (object) ['id' => 1, 'name' => 'Kopi'],
+        (object) ['id' => 2, 'name' => 'Non-Kopi'],
+        (object) ['id' => 3, 'name' => 'Makanan'],
+        (object) ['id' => 4, 'name' => 'Camilan'],
+    ]);
+    $categoryNames = $categories->pluck('name', 'id');
+
+    // Menu favorit: pakai $favoriteMenus bila dikirim controller, atau kolom is_best_seller, atau 4 menu pertama.
+    $favorites = $favoriteMenus ?? $menus->filter(fn ($m) => ! empty($m->is_best_seller))->take(4);
+    if ($favorites->isEmpty()) {
+        $favorites = $menus->take(4);
+    }
+
+    $variantsOf = fn ($menu) => $menu->variants->where('is_available', true)->sortBy('price')->values();
+    $imageOf = fn ($menu) => ($menu->image_url ?? null) ?: (! empty($menu->image) ? asset('storage/' . $menu->image) : null);
+    $rupiah = fn ($n) => 'Rp ' . number_format($n, 0, ',', '.');
+    $eta = fn ($menu) => (int) ($menu->prep_time ?? 10);
+@endphp
+
+{{-- Sprite ikon (dipakai ulang, tidak ada duplikasi SVG) --}}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><path d="M3 9h18M5 9v10M19 9v10M3 5h18v4H3z"/></symbol>
+    <symbol id="i-utensils" viewBox="0 0 24 24"><path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 21V3c-2 1-3 4-3 8h3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+</svg>
+
+<div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+{{-- ============ Navbar ============ --}}
+<header class="navbar">
+    <div class="container navbar-inner">
+        <a href="{{ route('home') }}" class="brand" aria-label="Magello, ke halaman utama">
+            <span class="brand-mark"><svg class="icon"><use href="#i-utensils"/></svg></span>
+            Magello
+        </a>
+
+        <nav class="nav-links" aria-label="Navigasi utama">
+            <a href="{{ route('home') }}">Home</a>
+            <a href="#favorit">Menu Favorit</a>
+            <a href="#menu">Semua Menu</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button type="button" class="theme-switch" role="switch" aria-checked="true" aria-label="Mode gelap" data-theme-toggle>
+                <span class="knob">
+                    <svg class="icon i-moon"><use href="#i-moon"/></svg>
+                    <svg class="icon i-sun"><use href="#i-sun"/></svg>
+                </span>
+            </button>
+            <a href="{{ route('order.select-table') }}" class="btn">{{ $tableId ? 'Ganti Meja' : 'Pilih Meja' }}</a>
+        </div>
+    </div>
+</header>
+
+<main class="container page">
+    {{-- ============ Hero & info ============ --}}
+    <section class="hero">
+        <span class="eyebrow">Magello Hangout Space</span>
+        <h1>Pesan dari meja</h1>
+        <p>Pilih menu favorit Anda atau lihat seluruh menu yang tersedia.</p>
+    </section>
+
+    <div class="stack">
+        <div class="notice">
+            <svg class="icon"><use href="#i-info"/></svg>
+            <div>
+                <strong>Informasi Pemesanan</strong>
+                <p>Pesanan Anda diproses setelah checkout. Estimasi penyajian 10–15 menit. Beberapa menu tersedia dalam beberapa ukuran dengan harga berbeda.</p>
             </div>
         </div>
-    </nav>
 
-    <div class="flex h-[calc(100vh-4rem)]">
-        <!-- Main Content - Menu Items -->
-        <div class="flex-1 p-6 overflow-y-auto">
-            <div class="max-w-6xl mx-auto">
-                <!-- Header -->
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-800">Magello Cafe</h1>
-                    <p class="text-gray-600">Silakan pilih menu yang Anda inginkan</p>
+        @if($tableId)
+            <div class="notice is-ok" role="status">
+                <svg class="icon"><use href="#i-table"/></svg>
+                <div>
+                    <strong>Meja {{ $tableLabel }} dipilih</strong>
+                    <p>Pesanan dine-in. Salah meja? <a class="link" href="{{ route('order.select-table') }}">Ganti meja</a></p>
                 </div>
+            </div>
+        @else
+            <div class="notice is-warn" role="alert">
+                <svg class="icon"><use href="#i-table"/></svg>
+                <div>
+                    <strong>Belum ada meja terpilih</strong>
+                    <p><a class="link" href="{{ route('order.select-table') }}">Pilih meja</a> atau scan QR code di meja Anda sebelum checkout.</p>
+                </div>
+            </div>
+        @endif
+    </div>
 
-                <!-- Table Info -->
-                @if($tableId)
+    {{-- ============ Menu favorit ============ --}}
+    @if($favorites->isNotEmpty())
+    <section id="favorit" class="section" aria-labelledby="favorit-title">
+        <div class="section-head">
+            <div class="ornament"><svg class="icon"><use href="#i-utensils"/></svg></div>
+            <h2 id="favorit-title">Menu Favorit</h2>
+            <p>Pilihan yang paling sering dipesan oleh pelanggan.</p>
+        </div>
+
+        <div class="fav-grid">
+            @foreach($favorites as $menu)
                 @php
-                    $table = \App\Models\RestaurantTable::find($tableId);
+                    $variants = $variantsOf($menu);
+                    $startPrice = $variants->isNotEmpty() ? $variants->first()->price : $menu->price;
+                    $img = $imageOf($menu);
                 @endphp
-                <div class="bg-orange-100 border-l-4 border-orange-500 p-4 mb-6 rounded-r-lg">
-                    <div class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        <div>
-                            <p class="font-bold text-orange-800">Order Meja {{ $table ? $table->table_number : $tableId }}</p>
-                            <p class="text-orange-600 text-sm">Pesanan dine-in</p>
-                        </div>
-                    </div>
-                </div>
-                @else
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 rounded-r-lg">
-                    <div class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                            <p class="font-bold text-yellow-800">Belum ada meja terpilih</p>
-                            <p class="text-yellow-600 text-sm">
-                                <a href="{{ route('order.select-table') }}" class="underline">Pilih meja</a> atau scan QR code
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Category Filter -->
-                <div class="flex gap-2 mb-6 flex-wrap">
-                                        <button onclick="filterMenu('all')" class="category-btn px-4 py-2 bg-orange-500 text-white rounded-full font-medium" data-category="all">Semua</button>
-                    <button onclick="filterMenu(1)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="1">Kopi</button>
-                    <button onclick="filterMenu(2)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="2">Non-Kopi</button>
-                    <button onclick="filterMenu(3)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="3">Makanan</button>
-                    <button onclick="filterMenu(4)" class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-100" data-category="4">Camilan</button>
-                </div>
-
-                <!-- Menu Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($menus as $menu)
-                     <div class="menu-item bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition" data-category="{{ $menu->category_id }}">
-                        <div class="h-48 bg-gray-200 flex items-center justify-center">
-                            <span class="text-gray-400">Image</span>
-                        </div>
-                        <div class="p-4">
-                            <h3 class="font-semibold text-lg mb-2">{{ $menu->name }}</h3>
-                            <p class="text-gray-600 text-sm mb-3">{{ $menu->description ?? 'Tidak ada deskripsi' }}</p>
-                            @php $variants = $menu->variants()->where('is_available', true)->orderBy('name')->get(); @endphp
-                            @if($variants->isNotEmpty())
-                                <div class="mb-3 space-y-2">
-                                    @foreach($variants as $variant)
-                                        <label class="flex items-center gap-2 text-sm text-gray-700">
-                                            <input type="radio" name="variant_{{ $menu->id }}" value="{{ $variant->id }}" data-name="{{ $variant->name }}" data-price="{{ $variant->price }}" {{ $loop->first ? 'checked' : '' }}>
-                                            <span>{{ $variant->name }} - Rp {{ number_format($variant->price, 0, ',', '.') }}</span>
-                                        </label>
-                                    @endforeach
-                                </div>
+                <article class="fav-card">
+                    @if(! empty($menu->is_best_seller))<span class="badge">Best Seller</span>@endif
+                    <div class="fav-media">
+                        <div class="oval">
+                            @if($img)
+                                <img src="{{ $img }}" alt="{{ $menu->name }}" loading="lazy" onerror="this.remove()">
+                            @else
+                                <svg class="icon"><use href="#i-utensils"/></svg>
                             @endif
-                            <div class="flex justify-between items-center">
-                                <span class="text-xl font-bold text-orange-600">Rp {{ number_format($variants->isNotEmpty() ? $variants->first()->price : $menu->price, 0, ',', '.') }}</span>
-                                <form action="{{ route('order.add-to-cart') }}" method="POST" class="js-add-to-cart-form" data-id="{{ $menu->id }}" data-name="{{ $menu->name }}" data-price="{{ $variants->isNotEmpty() ? $variants->first()->price : $menu->price }}">
-                                    @csrf
-                                    <input type="hidden" name="menu_id" value="{{ $menu->id }}">
-                                    <input type="hidden" name="variant_id" value="{{ $variants->isNotEmpty() ? $variants->first()->id : '' }}">
-                                    <input type="hidden" name="variant_name" value="{{ $variants->isNotEmpty() ? $variants->first()->name : '' }}">
-                                    <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
-                                        + Tambah
-                                    </button>
-                                </form>
-                            </div>
                         </div>
                     </div>
+                    <span class="eyebrow">{{ $categoryNames[$menu->category_id] ?? 'Menu' }}</span>
+                    <h3>{{ $menu->name }}</h3>
+                    <p class="desc">{{ \Illuminate\Support\Str::limit($menu->description, 48) }}</p>
+                    <div class="fav-foot">
+                        <div>
+                            <div class="price">{{ $variants->count() > 1 ? 'Mulai ' : '' }}{{ $rupiah($startPrice) }}</div>
+                            <div class="eta">Sekitar {{ $eta($menu) }} menit</div>
+                        </div>
+                        <button type="button" class="icon-btn" data-jump="{{ $menu->id }}" aria-label="Lihat {{ $menu->name }} di daftar menu" title="Lihat di daftar menu">
+                            <svg class="icon"><use href="#i-arrow"/></svg>
+                        </button>
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
+    {{-- ============ Semua menu + keranjang ============ --}}
+    <section id="menu" class="section" aria-labelledby="menu-title">
+        <div class="list-head">
+            <div>
+                <span class="eyebrow">Daftar Lengkap</span>
+                <h2 id="menu-title">Semua Menu</h2>
+            </div>
+            <div class="filters">
+                <label class="field">
+                    <span class="sr-only">Filter kategori</span>
+                    <select id="filter-category">
+                        <option value="all">Semua Kategori</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="field">
+                    <svg class="icon"><use href="#i-search"/></svg>
+                    <span class="sr-only">Cari menu</span>
+                    <input id="filter-search" type="search" placeholder="Cari menu..." autocomplete="off">
+                </label>
+            </div>
+        </div>
+
+        <div class="order-layout">
+            <div>
+                <p class="result-count" id="result-count" aria-live="polite"></p>
+
+                <div class="menu-list" id="menu-list">
+                    @foreach($menus as $menu)
+                        @php
+                            $variants = $variantsOf($menu);
+                            $first = $variants->first();
+                            $img = $imageOf($menu);
+                        @endphp
+                        <article class="menu-row"
+                                 data-menu-row
+                                 data-id="{{ $menu->id }}"
+                                 data-name="{{ $menu->name }}"
+                                 data-category="{{ $menu->category_id }}"
+                                 data-base-price="{{ $menu->price }}"
+                                 data-search="{{ mb_strtolower($menu->name . ' ' . $menu->description) }}">
+                            <div class="thumb">
+                                @if($img)
+                                    <img src="{{ $img }}" alt="" loading="lazy" onerror="this.remove()">
+                                @else
+                                    <svg class="icon"><use href="#i-utensils"/></svg>
+                                @endif
+                            </div>
+
+                            <div class="row-body">
+                                <span class="eyebrow">{{ $categoryNames[$menu->category_id] ?? 'Menu' }}</span>
+                                <h3>{{ $menu->name }}</h3>
+                                <p class="desc">{{ $menu->description ?: 'Tidak ada deskripsi' }}</p>
+
+                                @if($variants->isNotEmpty())
+                                    <div class="variants" role="radiogroup" aria-label="Ukuran {{ $menu->name }}">
+                                        @foreach($variants as $variant)
+                                            <label>
+                                                <input type="radio"
+                                                       name="variant_{{ $menu->id }}"
+                                                       value="{{ $variant->id }}"
+                                                       data-name="{{ $variant->name }}"
+                                                       data-price="{{ $variant->price }}"
+                                                       {{ $loop->first ? 'checked' : '' }}>
+                                                <span>{{ $variant->name }} <b>{{ $rupiah($variant->price) }}</b></span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="row-side">
+                                <span class="price js-price">{{ $rupiah($first ? $first->price : $menu->price) }}</span>
+                                <div class="stepper" role="group" aria-label="Jumlah {{ $menu->name }}">
+                                    <button type="button" data-action="decrease" aria-label="Kurangi {{ $menu->name }}" disabled><svg class="icon"><use href="#i-minus"/></svg></button>
+                                    <output class="js-qty">0</output>
+                                    <button type="button" data-action="increase" aria-label="Tambah {{ $menu->name }}"><svg class="icon"><use href="#i-plus"/></svg></button>
+                                </div>
+                            </div>
+                        </article>
                     @endforeach
                 </div>
-            </div>
-        </div>
 
-        <!-- Sidebar - Order Summary -->
-        <div class="w-96 bg-white shadow-lg p-6 overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Pesanan Anda</h2>
-
-            <div id="customer-cart-empty" class="text-center py-12" hidden>
-                <div class="text-gray-400 text-6xl mb-4">🛒</div>
-                <p class="text-gray-500">Keranjang kosong</p>
-                <p class="text-gray-400 text-sm">Silakan pilih menu terlebih dahulu</p>
-            </div>
-
-            <div id="customer-cart-list" class="space-y-4 mb-6"></div>
-
-            <div id="customer-cart-total" class="border-t-2 border-gray-200 pt-4 mb-6" hidden>
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-gray-600">Subtotal</span>
-                    <span id="customer-subtotal" class="font-medium">Rp 0</span>
+                <div class="empty" id="menu-empty" hidden>
+                    <svg class="icon"><use href="#i-search"/></svg>
+                    <strong>Menu tidak ditemukan</strong>
+                    <p>Coba kata kunci lain atau pilih kategori yang berbeda.</p>
+                    <button type="button" class="btn btn-ghost" id="reset-filter">Reset filter</button>
                 </div>
-                <div class="flex justify-between items-center text-xl font-bold">
-                    <span>Total</span>
-                    <span id="customer-total" class="text-blue-600">Rp 0</span>
-                </div>
+
+                <div class="more"><button type="button" class="btn btn-ghost" id="show-more" hidden>Tampilkan lebih banyak</button></div>
             </div>
 
-            @if($tableId)
-                <a href="{{ route('order.checkout') }}" id="customer-checkout" class="block w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition text-center" hidden>
-                    Lanjut ke Pembayaran
-                </a>
-            @else
-                <a href="{{ route('order.select-table') }}" class="block w-full bg-gray-400 text-white py-3 rounded-lg font-semibold text-center cursor-not-allowed">
-                    Pilih Meja Terlebih Dahulu
-                </a>
-            @endif
+            {{-- Keranjang --}}
+            <div class="cart-backdrop" id="cart-backdrop"></div>
+            <aside class="card cart" id="cart" aria-label="Pesanan Anda">
+                <div class="cart-head">
+                    <div>
+                        <span class="eyebrow">Pesanan Anda</span>
+                        <h2>Keranjang</h2>
+                    </div>
+                    <button type="button" class="icon-btn" id="cart-close" aria-label="Tutup keranjang" style="display:none"><svg class="icon"><use href="#i-x"/></svg></button>
+                </div>
+
+                <div class="cart-body">
+                    <div class="cart-empty" id="cart-empty">
+                        <span class="bag"><svg class="icon"><use href="#i-bag"/></svg></span>
+                        <strong>Keranjang masih kosong</strong>
+                        <p>Pilih menu favorit Anda untuk mulai memesan.</p>
+                    </div>
+                    <div id="cart-list"></div>
+                </div>
+
+                <div class="cart-foot" id="cart-foot" hidden>
+                    <div class="total-row"><span>Subtotal</span><span id="cart-subtotal">Rp 0</span></div>
+                    <div class="total-row grand"><span>Total</span><span id="cart-total">Rp 0</span></div>
+
+                    @if($tableId)
+                        <a href="{{ route('order.checkout') }}" id="checkout" class="btn btn-block">Lanjut ke Pembayaran</a>
+                    @else
+                        <a href="{{ route('order.select-table') }}" class="btn btn-block">Pilih Meja Terlebih Dahulu</a>
+                    @endif
+                    <button type="button" class="link-btn" id="clear-cart">Kosongkan keranjang</button>
+                </div>
+            </aside>
         </div>
-    </div>
+    </section>
+</main>
 
-    @if(session('success'))
-    <div class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
-        {{ session('success') }}
-    </div>
-    @endif
+{{-- Bar keranjang untuk layar kecil --}}
+<button type="button" class="cart-bar" id="cart-bar" hidden>
+    <span><small id="cart-bar-count">0 item</small>Lihat keranjang</span>
+    <span id="cart-bar-total">Rp 0</span>
+</button>
 
-    @if(session('error'))
-    <div class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
-        {{ session('error') }}
-    </div>
-    @endif
+<script>
+(function () {
+    'use strict';
 
-    <script>
-        const cartKey = 'magello-cart';
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    var CART_KEY = 'magello-cart';
+    var MAX_QTY = 99;
+    var PAGE_SIZE = 12;
+    var csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    var syncUrl = @json(route('order.sync-cart'));
 
-        function normalizeCartData(rawCart) {
-            const normalized = {};
-            Object.keys(rawCart || {}).forEach(function (key) {
-                const item = rawCart[key];
-                if (!item || !item.name) return;
-                const qty = Number(item.quantity || item.qty || 0);
-                if (qty <= 0) return;
-                normalized[String(item.id || key)] = {
-                    id: String(item.id || key),
-                    name: item.name,
-                    price: Number(item.price || 0),
-                    quantity: qty,
-                    qty: qty,
-                    variant_id: item.variant_id || null,
-                    variant_name: item.variant_name || null
-                };
+    var rows = Array.prototype.slice.call(document.querySelectorAll('[data-menu-row]'));
+    var $ = function (id) { return document.getElementById(id); };
+    var cartEl = $('cart');
+
+    function rupiah(v) { return 'Rp ' + Number(v || 0).toLocaleString('id-ID'); }
+    function h(tag, cls, text) {
+        var el = document.createElement(tag);
+        if (cls) el.className = cls;
+        if (text != null) el.textContent = text;
+        return el;
+    }
+    function icon(name) {
+        var wrap = document.createElement('span');
+        wrap.innerHTML = '<svg class="icon"><use href="#i-' + name + '"/></svg>';
+        return wrap.firstChild;
+    }
+
+    /* ---------- Data keranjang ----------
+       Kunci item = "<menu_id>:<variant_id|base>" supaya menu yang sama dengan
+       ukuran berbeda menjadi baris terpisah, dan variant tidak hilang. */
+    function keyOf(id, variantId) { return String(id) + ':' + String(variantId || 'base'); }
+
+    function normalize(raw) {
+        var out = {};
+        Object.keys(raw || {}).forEach(function (k) {
+            var it = raw[k];
+            if (!it || !it.name) return;
+            var qty = Number(it.qty || it.quantity || 0);
+            if (qty <= 0) return;
+            var id = String(it.id || it.menu_id || k.split(':')[0]);
+            var variantId = it.variant_id || null;
+            var key = keyOf(id, variantId);
+            out[key] = {
+                key: key, id: id, name: it.name, price: Number(it.price || 0),
+                qty: Math.min(qty, MAX_QTY), variant_id: variantId, variant_name: it.variant_name || null
+            };
+        });
+        return out;
+    }
+
+    function load() {
+        try { return normalize(JSON.parse(localStorage.getItem(CART_KEY) || '{}')); }
+        catch (e) { return {}; }
+    }
+
+    var cart = load();
+
+    function toServer(c) {
+        var out = {};
+        Object.keys(c).forEach(function (k) {
+            var it = c[k];
+            out[k] = {
+                key: it.key, id: it.id, menu_id: it.id, name: it.name,
+                display_name: it.variant_name ? it.name + ' - ' + it.variant_name : it.name,
+                price: it.price, quantity: it.qty, qty: it.qty,
+                variant_id: it.variant_id, variant_name: it.variant_name
+            };
+        });
+        return out;
+    }
+
+    /* ---------- Sinkronisasi ke server ---------- */
+    var syncTimer = null;
+
+    function sync() {
+        if (!csrf) return Promise.resolve();
+        return fetch(syncUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            body: JSON.stringify({ cart: toServer(cart) })
+        }).then(function (res) { if (!res.ok) throw new Error('sync failed'); });
+    }
+
+    function scheduleSync() {
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(function () {
+            sync().catch(function () {
+                MagelloUI.toast('Keranjang belum tersimpan ke server. Periksa koneksi Anda.', 'error');
             });
-            return normalized;
-        }
+        }, 300);
+    }
 
-        function syncCartToServer(cart) {
-            if (!csrfToken) return;
-            fetch('{{ route('order.sync-cart') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ cart: normalizeCartData(cart) })
-            }).catch(function () {});
-        }
+    function save() {
+        try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) {}
+        render();
+        scheduleSync();
+    }
 
-        function rupiah(value) {
-            return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
-        }
+    /* ---------- Baris menu ---------- */
+    function selectionOf(row) {
+        var checked = row.querySelector('input[type="radio"]:checked');
+        var id = row.dataset.id;
+        var variantId = checked ? checked.value : null;
+        return {
+            key: keyOf(id, variantId), id: id, name: row.dataset.name,
+            price: Number(checked ? checked.dataset.price : row.dataset.basePrice),
+            variant_id: variantId, variant_name: checked ? checked.dataset.name : null
+        };
+    }
 
-        function saveCart(cart) {
-            localStorage.setItem(cartKey, JSON.stringify(cart));
-            syncCartToServer(cart);
-            renderCart();
-        }
+    function refreshRow(row) {
+        var sel = selectionOf(row);
+        var qty = cart[sel.key] ? cart[sel.key].qty : 0;
+        row.querySelector('.js-price').textContent = rupiah(sel.price);
+        row.querySelector('.js-qty').textContent = qty;
+        row.querySelector('[data-action="decrease"]').disabled = qty <= 0;
+        row.querySelector('[data-action="increase"]').disabled = qty >= MAX_QTY;
+        var any = Object.keys(cart).some(function (k) { return cart[k].id === row.dataset.id; });
+        row.classList.toggle('is-selected', any);
+    }
 
-        function getCartItemKey(menuId, variantId = null) {
-            return String(menuId) + ':' + String(variantId || 'base');
-        }
+    function change(sel, delta) {
+        var item = cart[sel.key] || {
+            key: sel.key, id: sel.id, name: sel.name, price: sel.price, qty: 0,
+            variant_id: sel.variant_id, variant_name: sel.variant_name
+        };
+        item.qty = Math.min(MAX_QTY, Math.max(0, item.qty + delta));
+        if (item.qty <= 0) delete cart[sel.key]; else cart[sel.key] = item;
+        save();
+    }
 
-        function addToCart(id, name, price, variantId = null, variantName = null) {
-            const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            const key = getCartItemKey(id, variantId);
-            const current = stored[key] || { key, id: String(id), name, price: Number(price), qty: 0, variant_id: variantId, variant_name: variantName };
-            current.qty = Number(current.qty || 0) + 1;
-            current.variant_id = variantId || current.variant_id || null;
-            current.variant_name = variantName || current.variant_name || null;
-            current.price = Number(price || current.price || 0);
-            stored[key] = current;
-            saveCart(stored);
-        }
+    /* ---------- Render keranjang ---------- */
+    function render() {
+        var items = Object.keys(cart).map(function (k) { return cart[k]; });
+        var list = $('cart-list');
+        list.replaceChildren();
 
-        function updateQuantity(id, delta) {
-            const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            const item = Object.values(stored).find(value => String(value.id) === String(id));
-            if (!item) return;
-            const key = getCartItemKey(item.id, item.variant_id);
-            const target = stored[key];
-            if (!target) return;
-            target.qty = Math.max(0, Number(target.qty || 0) + delta);
-            if (target.qty <= 0) delete stored[key];
-            saveCart(stored);
-        }
+        var subtotal = 0, count = 0;
+        items.forEach(function (it) {
+            subtotal += it.qty * it.price;
+            count += it.qty;
 
-        function renderCart() {
-            const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            const items = Object.values(stored || {}).filter(item => item && Number(item.qty || 0) > 0);
-            const list = document.getElementById('customer-cart-list');
-            const empty = document.getElementById('customer-cart-empty');
-            const totalBox = document.getElementById('customer-cart-total');
-            const subtotalEl = document.getElementById('customer-subtotal');
-            const totalEl = document.getElementById('customer-total');
-            const checkoutBtn = document.getElementById('customer-checkout');
+            var label = it.variant_name ? it.name + ' - ' + it.variant_name : it.name;
+            var wrap = h('div', 'cart-item');
 
-            if (!list || !empty || !totalBox || !subtotalEl || !totalEl) return;
+            var top = h('div', 'cart-item-row');
+            var info = h('div');
+            info.append(h('h4', null, label), h('p', 'unit', rupiah(it.price)));
+            var remove = h('button', 'remove');
+            remove.type = 'button';
+            remove.dataset.action = 'remove';
+            remove.dataset.key = it.key;
+            remove.setAttribute('aria-label', 'Hapus ' + label);
+            remove.title = 'Hapus';
+            remove.appendChild(icon('x'));
+            top.append(info, remove);
 
-            list.innerHTML = '';
-            let subtotal = 0;
+            var bottom = h('div', 'cart-item-row');
+            var stepper = h('div', 'stepper');
+            stepper.setAttribute('role', 'group');
+            stepper.setAttribute('aria-label', 'Jumlah ' + label);
+            var minus = h('button'); minus.type = 'button'; minus.dataset.action = 'cart-decrease'; minus.dataset.key = it.key;
+            minus.setAttribute('aria-label', 'Kurangi ' + label); minus.appendChild(icon('minus'));
+            var plus = h('button'); plus.type = 'button'; plus.dataset.action = 'cart-increase'; plus.dataset.key = it.key;
+            plus.setAttribute('aria-label', 'Tambah ' + label); plus.appendChild(icon('plus'));
+            plus.disabled = it.qty >= MAX_QTY;
+            stepper.append(minus, h('output', null, String(it.qty)), plus);
+            bottom.append(stepper, h('span', 'line', rupiah(it.qty * it.price)));
 
-            items.forEach(function (item) {
-                const qty = Number(item.qty || 0);
-                const price = Number(item.price || 0);
-                subtotal += qty * price;
-
-                const row = document.createElement('div');
-                row.className = 'flex justify-between items-start border-b border-gray-200 pb-4';
-                const variantLabel = item.variant_name ? ` (${item.variant_name})` : '';
-                row.innerHTML = `
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-800">${item.name}${variantLabel}</h4>
-                        <p class="text-blue-600 font-medium">${rupiah(price)}</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="flex items-center border border-gray-300 rounded">
-                            <button type="button" class="px-2 py-1 text-lg" data-action="decrease" data-id="${item.id}" data-variant-id="${item.variant_id || 'base'}">-</button>
-                            <span class="w-8 text-center">${qty}</span>
-                            <button type="button" class="px-2 py-1 text-lg" data-action="increase" data-id="${item.id}" data-variant-id="${item.variant_id || 'base'}">+</button>
-                        </div>
-                        <button type="button" class="text-red-500 hover:text-red-700 ml-2" data-action="remove" data-id="${item.id}" data-variant-id="${item.variant_id || 'base'}">✕</button>
-                    </div>
-                `;
-                list.appendChild(row);
-            });
-
-            const hasItems = items.length > 0;
-            empty.hidden = hasItems;
-            list.hidden = !hasItems;
-            totalBox.hidden = !hasItems;
-            if (checkoutBtn) checkoutBtn.hidden = !hasItems;
-
-            subtotalEl.textContent = rupiah(subtotal);
-            totalEl.textContent = rupiah(subtotal);
-
-            list.querySelectorAll('button[data-action]').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    const action = button.getAttribute('data-action');
-                    const id = button.getAttribute('data-id');
-                    const variantId = button.getAttribute('data-variant-id');
-                    if (!id) return;
-                    const key = getCartItemKey(id, variantId === 'base' ? null : variantId);
-                    const stored = JSON.parse(localStorage.getItem(cartKey) || '{}');
-                    const target = stored[key];
-                    if (!target) return;
-                    if (action === 'increase') target.qty = Number(target.qty || 0) + 1;
-                    if (action === 'decrease') target.qty = Math.max(0, Number(target.qty || 0) - 1);
-                    if (action === 'remove') target.qty = 0;
-                    if (target.qty <= 0) delete stored[key];
-                    saveCart(stored);
-                });
-            });
-        }
-
-        document.querySelectorAll('.js-add-to-cart-form').forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                const id = form.getAttribute('data-id');
-                const name = form.getAttribute('data-name');
-                const selectedVariant = form.closest('.menu-item').querySelector('input[type="radio"]:checked');
-                const variantId = selectedVariant ? selectedVariant.value : null;
-                const variantName = selectedVariant ? selectedVariant.getAttribute('data-name') : null;
-                const price = Number(selectedVariant ? selectedVariant.getAttribute('data-price') : form.getAttribute('data-price') || 0);
-
-                form.querySelector('input[name="variant_id"]').value = variantId || '';
-                form.querySelector('input[name="variant_name"]').value = variantName || '';
-
-                addToCart(id, name, price, variantId, variantName);
-                form.submit();
-            });
+            wrap.append(top, bottom);
+            list.appendChild(wrap);
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
-            renderCart();
-            const savedCart = JSON.parse(localStorage.getItem(cartKey) || '{}');
-            if (Object.keys(savedCart).length) {
-                syncCartToServer(savedCart);
-            }
-        });
+        var has = items.length > 0;
+        $('cart-empty').hidden = has;
+        $('cart-foot').hidden = !has;
+        $('cart-subtotal').textContent = rupiah(subtotal);
+        $('cart-total').textContent = rupiah(subtotal);
+        $('cart-bar').hidden = !has;
+        $('cart-bar-count').textContent = count + ' item';
+        $('cart-bar-total').textContent = rupiah(subtotal);
 
-        window.addEventListener('storage', function (event) {
-            if (event.key === cartKey) {
-                renderCart();
-            }
-        });
+        rows.forEach(refreshRow);
+    }
 
-        function filterMenu(category) {
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                if (btn.dataset.category == category || (category === 'all' && btn.dataset.category === 'all')) {
-                    btn.classList.remove('bg-white', 'text-gray-700');
-                    btn.classList.add('bg-orange-500', 'text-white');
-                } else {
-                    btn.classList.remove('bg-orange-500', 'text-white');
-                    btn.classList.add('bg-white', 'text-gray-700');
-                }
-            });
+    /* ---------- Event: klik ---------- */
+    document.addEventListener('click', function (event) {
+        var jump = event.target.closest('[data-jump]');
+        if (jump) { jumpTo(jump.dataset.jump); return; }
 
-            document.querySelectorAll('.menu-item').forEach(item => {
-                if (category === 'all' || item.dataset.category == category) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+        var btn = event.target.closest('[data-action]');
+        if (!btn) return;
+        var action = btn.dataset.action;
+
+        var row = btn.closest('[data-menu-row]');
+        if (row && (action === 'increase' || action === 'decrease')) {
+            change(selectionOf(row), action === 'increase' ? 1 : -1);
+            return;
         }
-    </script>
+
+        var item = cart[btn.dataset.key];
+        if (!item) return;
+        if (action === 'cart-increase') change(item, 1);
+        if (action === 'cart-decrease') change(item, -1);
+        if (action === 'remove') {
+            var label = item.variant_name ? item.name + ' - ' + item.variant_name : item.name;
+            change(item, -item.qty);
+            MagelloUI.toast(label + ' dihapus dari keranjang.');
+        }
+    });
+
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('[data-menu-row] input[type="radio"]')) {
+            refreshRow(event.target.closest('[data-menu-row]'));
+        }
+    });
+
+    $('clear-cart').addEventListener('click', function () {
+        MagelloUI.confirm({
+            title: 'Kosongkan keranjang?',
+            message: 'Semua menu yang sudah Anda pilih akan dihapus dari pesanan.',
+            confirmText: 'Kosongkan', danger: true
+        }).then(function (ok) {
+            if (!ok) return;
+            cart = {};
+            save();
+            MagelloUI.toast('Keranjang dikosongkan.', 'success');
+        });
+    });
+
+    /* Pastikan keranjang tersinkron ke server sebelum pindah ke checkout. */
+    var checkout = $('checkout');
+    if (checkout) {
+        checkout.addEventListener('click', function (event) {
+            event.preventDefault();
+            if (checkout.classList.contains('is-loading')) return;
+            clearTimeout(syncTimer);
+            checkout.classList.add('is-loading');
+            checkout.setAttribute('aria-disabled', 'true');
+            sync().then(function () {
+                window.location.href = checkout.href;
+            }).catch(function () {
+                checkout.classList.remove('is-loading');
+                checkout.removeAttribute('aria-disabled');
+                MagelloUI.toast('Gagal melanjutkan ke pembayaran. Coba lagi.', 'error');
+            });
+        });
+    }
+
+    /* ---------- Filter, pencarian, tampilkan lebih banyak ---------- */
+    var filterCat = $('filter-category'), filterSearch = $('filter-search');
+    var shown = PAGE_SIZE;
+
+    function applyFilter() {
+        var cat = filterCat.value, q = filterSearch.value.trim().toLowerCase(), matched = 0;
+        rows.forEach(function (row) {
+            var ok = (cat === 'all' || row.dataset.category === cat) && (!q || row.dataset.search.indexOf(q) !== -1);
+            if (ok) { matched++; row.hidden = matched > shown; } else { row.hidden = true; }
+        });
+        $('menu-empty').hidden = matched > 0;
+        $('show-more').hidden = matched <= shown;
+        $('result-count').textContent = matched > 0 ? matched + ' menu ditemukan' : '';
+    }
+
+    filterCat.addEventListener('change', function () { shown = PAGE_SIZE; applyFilter(); });
+    filterSearch.addEventListener('input', function () { shown = PAGE_SIZE; applyFilter(); });
+    $('show-more').addEventListener('click', function () { shown += PAGE_SIZE; applyFilter(); });
+    $('reset-filter').addEventListener('click', function () {
+        filterCat.value = 'all'; filterSearch.value = ''; shown = PAGE_SIZE; applyFilter();
+    });
+
+    function jumpTo(menuId) {
+        var row = document.querySelector('[data-menu-row][data-id="' + menuId + '"]');
+        if (!row) return;
+        if (row.hidden) { filterCat.value = 'all'; filterSearch.value = ''; shown = rows.length; applyFilter(); }
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.remove('is-flash');
+        void row.offsetWidth;
+        row.classList.add('is-flash');
+    }
+
+    /* ---------- Keranjang di layar kecil ---------- */
+    var backdrop = $('cart-backdrop'), closeBtn = $('cart-close');
+    var mq = window.matchMedia('(max-width: 900px)');
+    function setCartOpen(open) {
+        cartEl.classList.toggle('is-open', open);
+        backdrop.classList.toggle('is-open', open);
+        document.body.style.overflow = open ? 'hidden' : '';
+    }
+    function syncCartChrome() {
+        closeBtn.style.display = mq.matches ? '' : 'none';
+        if (!mq.matches) setCartOpen(false);
+    }
+    $('cart-bar').addEventListener('click', function () { setCartOpen(true); });
+    closeBtn.addEventListener('click', function () { setCartOpen(false); });
+    backdrop.addEventListener('click', function () { setCartOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setCartOpen(false); });
+    mq.addEventListener('change', syncCartChrome);
+
+    /* Sinkron antar tab */
+    window.addEventListener('storage', function (event) {
+        if (event.key === CART_KEY) { cart = load(); render(); }
+    });
+
+    /* ---------- Init ---------- */
+    syncCartChrome();
+    applyFilter();
+    render();
+    if (Object.keys(cart).length) scheduleSync();
+
+    /* Pesan flash dari server -> toast */
+    document.addEventListener('DOMContentLoaded', function () {
+        @if(session('success')) MagelloUI.toast(@json(session('success')), 'success'); @endif
+        @if(session('error')) MagelloUI.toast(@json(session('error')), 'error'); @endif
+        @if($errors->any()) MagelloUI.toast(@json($errors->first()), 'error'); @endif
+    });
+})();
+</script>
 </body>
 </html>
