@@ -1,106 +1,140 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Data Pemesan - Magello Cafe</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        try {
+            var t = localStorage.getItem('magello-theme');
+            document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        } catch (e) {}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    @vite(['resources/css/magello.css', 'resources/js/magello.js'])
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold text-orange-600">Magello</a>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-utensils" viewBox="0 0 24 24"><path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 21V3c-2 1-3 4-3 8h3"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+</svg>
+
+<div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+<!-- Navbar -->
+<header class="navbar">
+    <div class="container navbar-inner">
+        <a href="{{ route('home') }}" class="brand" aria-label="Magello, ke halaman utama">
+            <span class="brand-mark"><svg class="icon"><use href="#i-utensils"/></svg></span>
+            Magello
+        </a>
+        <div class="nav-actions">
+            <button type="button" class="theme-switch" role="switch" aria-checked="true" aria-label="Mode gelap" data-theme-toggle>
+                <span class="knob">
+                    <svg class="icon i-moon"><use href="#i-moon"/></svg>
+                    <svg class="icon i-sun"><use href="#i-sun"/></svg>
+                </span>
+            </button>
+            <a href="{{ route('order.index') }}" class="btn btn-ghost" style="font-size: 13px;">
+                Kembali ke Menu
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="container" style="padding-block: 32px; display: flex; justify-content: center;">
+    <div style="width: 100%; max-width: 520px;">
+        <div class="card" style="padding: 28px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2); color: var(--accent); margin-bottom: 12px; border: 1px solid var(--border);">
+                    <svg class="icon" style="width: 28px; height: 28px;"><use href="#i-user"/></svg>
                 </div>
+                <h1 style="font-size: 24px; margin-bottom: 6px;">Data Pemesan</h1>
+                <p style="color: var(--muted); font-size: 14px;">Silakan lengkapi data untuk konfirmasi pesanan</p>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="notice" style="flex-direction: column; gap: 10px; margin-bottom: 24px; background: var(--bg-elev);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                    <strong style="color: var(--heading); font-size: 14px;">Ringkasan Pesanan</strong>
+                    <span class="badge">{{ count($cart) }} Item</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+                    @foreach($cart as $item)
+                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                        <span style="color: var(--text);">{{ $item['name'] }} <span style="color: var(--muted);">x{{ $item['quantity'] }}</span></span>
+                        <span style="color: var(--muted); font-weight: 500;">Rp {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</span>
+                    </div>
+                    @endforeach
+                </div>
+                <div style="border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px; display: flex; justify-content: space-between; font-weight: 700;">
+                    <span style="color: var(--heading);">Total</span>
+                    <span style="color: var(--price); font-size: 16px;">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form action="{{ route('order.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 18px;">
+                @csrf
+
                 <div>
-                    <a href="{{ route('order.index') }}" class="text-gray-600 hover:text-orange-600 text-sm font-medium">
-                        Kembali ke Menu
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="flex items-center justify-center p-4 min-h-[calc(100vh-4rem)]">
-        <div class="max-w-lg w-full">
-            <div class="bg-white rounded-2xl shadow-xl p-8">
-                <div class="text-center mb-8">
-                    <div class="inline-block bg-orange-100 rounded-full p-4 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    </div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Data Pemesan</h1>
-                    <p class="text-gray-600">Silakan lengkapi data untuk konfirmasi pesanan</p>
-                </div>
-
-                <!-- Order Summary -->
-                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                    <h3 class="font-semibold text-orange-800 mb-2">Ringkasan Pesanan</h3>
-                    <div class="space-y-2">
-                        @foreach($cart as $item)
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-700">{{ $item['name'] }} x{{ $item['quantity'] }}</span>
-                            <span class="text-gray-700">Rp {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</span>
-                        </div>
-                        @endforeach
-                    </div>
-                    <div class="border-t border-orange-300 mt-3 pt-3 flex justify-between font-bold">
-                        <span class="text-orange-800">Total</span>
-                        <span class="text-orange-800">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--heading); margin-bottom: 6px;">
+                        Nama Lengkap <span style="color: var(--err-text);">*</span>
+                    </label>
+                    <div class="field" style="border-radius: 12px; height: 44px;">
+                        <input type="text" name="customer_name" placeholder="Masukkan nama lengkap Anda" required style="width: 100%;">
                     </div>
                 </div>
 
-                <!-- Form -->
-                <form action="{{ route('order.store') }}" method="POST" class="space-y-6">
-                    @csrf
-
-                    <div>
-                        <label class="block text-gray-700 text-sm font-medium mb-2">
-                            Nama Lengkap <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="customer_name" placeholder="Masukkan nama lengkap Anda"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                               required>
-                    </div>
-
-                    <div>
-                        <label class="block text-gray-700 text-sm font-medium mb-2">
-                            Nomor HP <span class="text-red-500">*</span>
-                        </label>
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--heading); margin-bottom: 6px;">
+                        Nomor HP <span style="color: var(--err-text);">*</span>
+                    </label>
+                    <div class="field" style="border-radius: 12px; height: 44px;">
                         <input type="tel" name="customer_phone" placeholder="Contoh: 08123456789"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                               pattern="[0-9]{10,13}"
-                               title="Nomor HP harus 10-13 digit angka"
-                               required>
-                        <p class="text-gray-500 text-xs mt-1">Digunakan untuk notifikasi status pesanan</p>
+                               pattern="[0-9]{10,13}" title="Nomor HP harus 10-13 digit angka" required style="width: 100%;">
                     </div>
+                    <p style="color: var(--muted); font-size: 12px; margin-top: 4px;">Digunakan untuk notifikasi status pesanan</p>
+                </div>
 
-                    <div class="flex gap-4">
-                        <a href="{{ route('order.index') }}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-center">
-                            Kembali
-                        </a>
-                        <button type="submit" class="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition">
-                            Konfirmasi Pesanan
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div style="display: flex; gap: 12px; margin-top: 8px;">
+                    <a href="{{ route('order.index') }}" class="btn btn-ghost" style="flex: 1; min-height: 44px;">
+                        Kembali
+                    </a>
+                    <button type="submit" class="btn" style="flex: 1; min-height: 44px;">
+                        Konfirmasi Pesanan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</main>
 
-    @if(session('success'))
-    <div class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
-        {{ session('success') }}
-    </div>
-    @endif
+@if(session('success'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.MagelloUI && window.MagelloUI.toast) {
+            window.MagelloUI.toast("{{ session('success') }}", "success");
+        }
+    });
+</script>
+@endif
 
-    @if(session('error'))
-    <div class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
-        {{ session('error') }}
-    </div>
-    @endif
+@if(session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.MagelloUI && window.MagelloUI.toast) {
+            window.MagelloUI.toast("{{ session('error') }}", "error");
+        }
+    });
+</script>
+@endif
 </body>
 </html>
