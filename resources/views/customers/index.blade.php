@@ -20,31 +20,6 @@
 @vite(['resources/css/magello.css', 'resources/css/order.css', 'resources/js/magello.js'])
 </head>
 <body>
-@php
-    // ---- Data pendukung tampilan (tanpa mengubah controller) ----
-    $table = $tableId ? \App\Models\RestaurantTable::find($tableId) : null;
-    $tableLabel = $table ? $table->table_number : $tableId;
-
-    // Kategori: pakai $categories dari controller bila ada, kalau tidak pakai daftar lama.
-    $categories = $categories ?? collect([
-        (object) ['id' => 1, 'name' => 'Kopi'],
-        (object) ['id' => 2, 'name' => 'Non-Kopi'],
-        (object) ['id' => 3, 'name' => 'Makanan'],
-        (object) ['id' => 4, 'name' => 'Camilan'],
-    ]);
-    $categoryNames = $categories->pluck('name', 'id');
-
-    // Menu favorit: pakai $favoriteMenus bila dikirim controller, atau kolom is_best_seller, atau 4 menu pertama.
-    $favorites = $favoriteMenus ?? $menus->filter(fn ($m) => ! empty($m->is_best_seller))->take(4);
-    if ($favorites->isEmpty()) {
-        $favorites = $menus->take(4);
-    }
-
-    $variantsOf = fn ($menu) => $menu->variants->where('is_available', true)->sortBy('price')->values();
-    $imageOf = fn ($menu) => ($menu->image_url ?? null) ?: (! empty($menu->image) ? asset('storage/' . $menu->image) : null);
-    $rupiah = fn ($n) => 'Rp ' . number_format($n, 0, ',', '.');
-    $eta = fn ($menu) => (int) ($menu->prep_time ?? 10);
-@endphp
 
 {{-- Sprite ikon (dipakai ulang, tidak ada duplikasi SVG) --}}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -137,9 +112,9 @@
         <div class="fav-grid">
             @foreach($favorites as $menu)
                 @php
-                    $variants = $variantsOf($menu);
+                    $variants = $menu->available_variants;
                     $startPrice = $variants->isNotEmpty() ? $variants->first()->price : $menu->price;
-                    $img = $imageOf($menu);
+                    $img = $menu->formatted_image;
                 @endphp
                 <article class="fav-card">
                     @if(! empty($menu->is_best_seller))<span class="badge">Best Seller</span>@endif
@@ -157,8 +132,8 @@
                     <p class="desc">{{ \Illuminate\Support\Str::limit($menu->description, 48) }}</p>
                     <div class="fav-foot">
                         <div>
-                            <div class="price">{{ $variants->count() > 1 ? 'Mulai ' : '' }}{{ $rupiah($startPrice) }}</div>
-                            <div class="eta">Sekitar {{ $eta($menu) }} menit</div>
+                            <div class="price">{{ $variants->count() > 1 ? 'Mulai ' : '' }}Rp {{ number_format($startPrice, 0, ',', '.') }}</div>
+                            <div class="eta">Sekitar {{ (int) ($menu->prep_time ?? 10) }} menit</div>
                         </div>
                         <button type="button" class="icon-btn" data-jump="{{ $menu->id }}" aria-label="Lihat {{ $menu->name }} di daftar menu" title="Lihat di daftar menu">
                             <svg class="icon"><use href="#i-arrow"/></svg>
@@ -202,9 +177,9 @@
                 <div class="menu-list" id="menu-list">
                     @foreach($menus as $menu)
                         @php
-                            $variants = $variantsOf($menu);
+                            $variants = $menu->available_variants;
                             $first = $variants->first();
-                            $img = $imageOf($menu);
+                            $img = $menu->formatted_image;
                         @endphp
                         <article class="menu-row"
                                  data-menu-row
@@ -236,7 +211,7 @@
                                                        data-name="{{ $variant->name }}"
                                                        data-price="{{ $variant->price }}"
                                                        {{ $loop->first ? 'checked' : '' }}>
-                                                <span>{{ $variant->name }} <b>{{ $rupiah($variant->price) }}</b></span>
+                                                <span>{{ $variant->name }} <b>Rp {{ number_format($variant->price, 0, ',', '.') }}</b></span>
                                             </label>
                                         @endforeach
                                     </div>
@@ -244,7 +219,7 @@
                             </div>
 
                             <div class="row-side">
-                                <span class="price js-price">{{ $rupiah($first ? $first->price : $menu->price) }}</span>
+                                <span class="price js-price">Rp {{ number_format($first ? $first->price : $menu->price, 0, ',', '.') }}</span>
                                 <div class="stepper" role="group" aria-label="Jumlah {{ $menu->name }}">
                                     <button type="button" data-action="decrease" aria-label="Kurangi {{ $menu->name }}" disabled><svg class="icon"><use href="#i-minus"/></svg></button>
                                     <output class="js-qty">0</output>

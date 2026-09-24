@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\AdminAuthController;
@@ -11,44 +12,8 @@ use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\AdminTableController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\KitchenController;
-use App\Models\Menu;
 
-Route::get('/', function () {
-    $menus = Menu::with('category')
-        ->where('is_available', true)
-        ->orderBy('name')
-        ->get()
-        ->map(function ($menu) {
-            return [
-                'id' => $menu->id,
-                'name' => $menu->name,
-                'price' => (float) $menu->price,
-                'category' => $menu->category?->name ?? 'Lainnya',
-                'desc' => $menu->description ?? 'Menu pilihan Magello.',
-                'image' => $menu->image ? Storage::url($menu->image) : '',
-                'badge' => null,
-                'eta' => 10,
-            ];
-        })
-        ->all();
-
-    $categories = collect($menus)
-        ->pluck('category')
-        ->filter()
-        ->unique()
-        ->values()
-        ->all();
-
-    return view('home', [
-        'trackUrl' => route('order.index'),
-        'tableNo' => '',
-        'openTime' => '09:00',
-        'closeTime' => '23:00',
-        'kitchenBusy' => false,
-        'categories' => $categories,
-        'menus' => $menus,
-    ]);
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');

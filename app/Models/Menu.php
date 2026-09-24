@@ -31,4 +31,20 @@ class Menu extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function getAvailableVariantsAttribute()
+    {
+        return $this->variants->where('is_available', true)->sortBy('price')->values();
+    }
+
+    public function getFormattedImageAttribute(): ?string
+    {
+        if (!empty($this->image_url)) {
+            return $this->image_url;
+        }
+        if (!empty($this->image)) {
+            return asset('storage/' . $this->image);
+        }
+        return null;
+    }
 }

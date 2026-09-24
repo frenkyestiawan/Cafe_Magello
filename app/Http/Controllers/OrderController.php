@@ -15,6 +15,8 @@ class OrderController extends Controller
     public function index()
     {
         $tableId = session('table_id');
+        $table = $tableId ? RestaurantTable::find($tableId) : null;
+        $tableLabel = $table ? $table->table_number : $tableId;
 
         $menus = Menu::with(['category', 'variants'])
             ->where('is_available', true)
@@ -27,12 +29,31 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get();
 
+        $categoryNames = $categories->pluck('name', 'id');
+
+        // Menu favorit berdasarkan total jumlah (quantity) pemesanan pelanggan
+        $favorites = Menu::with(['category', 'variants'])
+            ->where('is_available', true)
+            ->withSum('orderDetails', 'quantity')
+            ->orderByDesc('order_details_sum_quantity')
+            ->orderBy('name')
+            ->take(4)
+            ->get();
+
+        // Fallback jika belum ada pemesanan sama sekali (total order quantity == 0)
+        if ($favorites->isEmpty() || (int) $favorites->sum('order_details_sum_quantity') === 0) {
+            $favorites = $menus->filter(fn ($m) => !empty($m->is_best_seller))->take(4);
+            if ($favorites->isEmpty()) {
+                $favorites = $menus->take(4);
+            }
+        }
+
         $cart = session('cart', []);
         $subtotal = collect($cart)->sum(function ($item) {
             return $item['price'] * $item['quantity'];
         });
 
-        return view('customers.index', compact('menus', 'categories', 'cart', 'subtotal', 'tableId'));
+        return view('customers.index', compact('menus', 'categories', 'categoryNames', 'favorites', 'cart', 'subtotal', 'tableId', 'tableLabel'));
     }
 
 
