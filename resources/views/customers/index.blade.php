@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Pesan Menu - Magello Cafe</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
 
     {{-- Terapkan tema sebelum render agar tidak berkedip. Default: gelap (sesuai mockup). --}}
     <script>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slip Pesanan {{ $order->order_code }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
