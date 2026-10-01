@@ -2,76 +2,72 @@
 
 @section('title', 'Pesanan')
 @section('page-title', 'Monitoring Pesanan')
+@section('page-subtitle', 'Pantau pesanan dan statusnya.')
+@section('page-actions')
+    <form action="{{ route('admin.orders.index') }}" method="GET" class="adm-search adm-search--select">
+        <label for="statusFilter" class="adm-sr-only">Filter status pesanan</label>
+        <select id="statusFilter" name="status" data-autosubmit>
+            <option value="">Semua Status</option>
+            <option value="menunggu" {{ strtolower((string) $status) == 'menunggu' ? 'selected' : '' }}>Menunggu</option>
+            <option value="diproses" {{ strtolower((string) $status) == 'diproses' ? 'selected' : '' }}>Diproses</option>
+            <option value="selesai" {{ strtolower((string) $status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
+            <option value="sudah_diambil" {{ strtolower((string) $status) == 'sudah_diambil' ? 'selected' : '' }}>Sudah Diambil</option>
+        </select>
+    </form>
+@endsection
 
 @section('content')
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-lg font-semibold text-gray-800">Daftar Pesanan</h3>
-        
-        <div class="flex space-x-2">
-            <select id="statusFilter" onchange="filterByStatus()" class="border border-gray-300 rounded px-3 py-2">
-                <option value="">Semua Status</option>
-                <option value="menunggu" {{ strtolower((string) $status) == 'menunggu' ? 'selected' : '' }}>Menunggu</option>
-                <option value="diproses" {{ strtolower((string) $status) == 'diproses' ? 'selected' : '' }}>Diproses</option>
-                <option value="selesai" {{ strtolower((string) $status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                <option value="sudah_diambil" {{ strtolower((string) $status) == 'sudah_diambil' ? 'selected' : '' }}>Sudah Diambil</option>
-            </select>
-        </div>
+<section class="adm-card" aria-labelledby="orders-list-title">
+    <div class="adm-card-head">
+        <h2 class="adm-card-title" id="orders-list-title">Daftar Pesanan <span class="adm-badge">{{ $orders->total() }}</span></h2>
     </div>
-    
+
     @if($orders->count() > 0)
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <div class="adm-table-wrap">
+            <table class="adm-table adm-table--stack">
                 <thead>
-                    <tr class="bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Pesanan</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pelanggan</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. HP</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meja</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    <tr>
+                        <th scope="col">No. Pesanan</th>
+                        <th scope="col">Pelanggan</th>
+                        <th scope="col">No. HP</th>
+                        <th scope="col">Meja</th>
+                        <th scope="col">Menu</th>
+                        <th scope="col">Jumlah</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Waktu</th>
+                        <th scope="col" class="is-actions">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @foreach($orders as $order)
+                        @php
+                            [$badge, $label] = match ($order->status) {
+                                'menunggu' => ['warn', $order->status_label],
+                                'diproses' => ['proc', $order->status_label],
+                                'selesai' => ['ok', 'Siap Diambil'],
+                                'sudah_diambil' => ['info', $order->status_label],
+                                default => ['', $order->status_label],
+                            };
+                        @endphp
                         <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ $order->order_code }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->customer_name }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->customer_phone ?? '-' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->restaurantTable->table_number ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">
-                                {{ $order->orderDetails->pluck('menu.name')->take(2)->implode(', ') }}
+                            <td data-label="No. Pesanan" class="is-strong">{{ $order->order_code }}</td>
+                            <td data-label="Pelanggan">{{ $order->customer_name }}</td>
+                            <td data-label="No. HP" class="is-muted">{{ $order->customer_phone ?? '-' }}</td>
+                            <td data-label="Meja" class="is-muted">{{ $order->restaurantTable->table_number ?? '-' }}</td>
+                            <td data-label="Menu" class="is-muted">
+                                {{ $order->orderDetails->pluck('menu.name')->take(2)->implode(', ') ?: '-' }}
                                 @if($order->orderDetails->count() > 2)
-                                    <span class="text-gray-400">+{{ $order->orderDetails->count() - 2 }} lainnya</span>
+                                    <span class="adm-help">+{{ $order->orderDetails->count() - 2 }} lainnya</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->orderDetails->sum('quantity') }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                @php
-                                    $label = $order->status_label;
-                                @endphp
-
-                                @if($order->status === 'menunggu')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{{ $label }}</span>
-                                @elseif($order->status === 'diproses')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">{{ $label }}</span>
-                                @elseif($order->status === 'selesai')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">{{ $label }}</span>
-                                @elseif($order->status === 'sudah_diambil')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $label }}</span>
-                                @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{{ $label }}</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $order->created_at->format('d M Y H:i') }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                <a href="{{ route('admin.orders.show', $order->id) }}" class="text-blue-600 hover:text-blue-900 mr-2">
-                                    <i class="fas fa-eye"></i> Detail
+                            <td data-label="Jumlah" class="is-muted">{{ $order->orderDetails->sum('quantity') }}</td>
+                            <td data-label="Total" class="is-muted">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
+                            <td data-label="Status"><span class="adm-badge {{ $badge ? 'adm-badge--' . $badge : '' }}">{{ $label }}</span></td>
+                            <td data-label="Waktu" class="is-muted">{{ $order->created_at->format('d M Y H:i') }}</td>
+                            <td data-label="Aksi" class="is-actions">
+                                <a href="{{ route('admin.orders.show', $order->id) }}" class="adm-btn adm-btn--ghost adm-btn--sm">
+                                    <svg class="adm-icon" aria-hidden="true"><use href="#i-eye"/></svg>Detail
                                 </a>
                             </td>
                         </tr>
@@ -79,25 +75,13 @@
                 </tbody>
             </table>
         </div>
-        
-        <div class="mt-4">
-            {{ $orders->links() }}
-        </div>
+        {{ $orders->appends(request()->query())->links('admin.layouts.pagination') }}
     @else
-        <p class="text-gray-500 text-center py-4">Belum ada pesanan.</p>
+        <div class="adm-empty">
+            <svg class="adm-icon" aria-hidden="true"><use href="#i-inbox"/></svg>
+            <strong>Belum ada pesanan.</strong>
+            <p>Pesanan baru akan muncul di sini.</p>
+        </div>
     @endif
-</div>
-
-<script>
-function filterByStatus() {
-    const status = document.getElementById('statusFilter').value;
-    const url = new URL(window.location.href);
-    if (status) {
-        url.searchParams.set('status', status);
-    } else {
-        url.searchParams.delete('status');
-    }
-    window.location.href = url.toString();
-}
-</script>
+</section>
 @endsection

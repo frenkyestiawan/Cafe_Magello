@@ -386,6 +386,9 @@ html { scroll-behavior: smooth; scroll-padding-top: calc(var(--adm-nav-h) + 16px
     border: 1px solid var(--border); border-radius: var(--adm-radius-sm); background: var(--bg-elev);
 }
 .adm-menu-thumb--empty { display: grid; place-items: center; color: var(--muted); }
+.adm-order-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.adm-order-status .adm-select { flex: 1 1 180px; }
+.adm-order-total { color: var(--price); font-family: var(--adm-font-display); font-size: 28px; font-weight: 700; overflow-wrap: anywhere; }
 
 .adm-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
 .adm-help { margin-top: 6px; font-size: 12px; color: var(--muted); }
