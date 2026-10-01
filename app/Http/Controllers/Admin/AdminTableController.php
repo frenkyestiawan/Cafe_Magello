@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\RestaurantTable;
-use Illuminate\Support\Facades\Http;
+use App\Services\TableQrCodeGenerator;
 
 class AdminTableController extends Controller
 {
+    public function __construct(private TableQrCodeGenerator $qrCodeGenerator)
+    {
+    }
+
     public function index()
     {
         $tables = RestaurantTable::orderBy('table_number')->paginate(10);
@@ -46,11 +50,7 @@ class AdminTableController extends Controller
             'is_available' => $request->boolean('is_available'),
         ]);
         
-        // Generate QR Code using online API
-        $qrCodeUrl = request()->getSchemeAndHttpHost() . '/order/table/' . $table->table_number;
-        $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
-        
-        $table->update(['qr_code' => $qrCodeApiUrl]);
+        $table->update(['qr_code' => $this->qrCodeGenerator->generate($table)]);
         
         return redirect()->route('admin.tables.show', $table->id)->with('success', 'Meja berhasil ditambahkan.');
     }
@@ -88,9 +88,7 @@ class AdminTableController extends Controller
         
         // Regenerate QR Code if table number changed
         if ($table->table_number !== $tableNumber) {
-            $qrCodeUrl = request()->getSchemeAndHttpHost() . '/order/table/' . $tableNumber;
-            $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
-            $data['qr_code'] = $qrCodeApiUrl;
+            $data['qr_code'] = $this->qrCodeGenerator->generate($table, $tableNumber);
         }
         
         $table->update($data);
@@ -110,10 +108,7 @@ class AdminTableController extends Controller
     {
         $table = RestaurantTable::findOrFail($id);
         
-        $qrCodeUrl = request()->getSchemeAndHttpHost() . '/order/table/' . $table->table_number;
-        $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
-        
-        $table->update(['qr_code' => $qrCodeApiUrl]);
+        $table->update(['qr_code' => $this->qrCodeGenerator->generate($table)]);
         
         return redirect()->back()->with('success', 'QR Code berhasil diperbarui.');
     }

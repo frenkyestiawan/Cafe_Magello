@@ -62,7 +62,7 @@
                     <label for="email" class="adm-label">Email</label>
                     <input type="email" id="email" name="email" value="{{ old('email') }}"
                            class="adm-input {{ $errors->has('email') ? 'is-invalid' : '' }}"
-                           autocomplete="username" placeholder="admin@example.com" required
+                           autocomplete="username" placeholder="admin@cafemagello.com" required
                            @if($errors->has('email')) aria-invalid="true" @endif>
                 </div>
 

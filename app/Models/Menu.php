@@ -15,6 +15,7 @@ class Menu extends Model
         'description',
         'image',
         'is_available',
+        'is_best_seller',
     ];
 
     public function orderDetails(): HasMany

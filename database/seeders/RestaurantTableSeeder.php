@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\RestaurantTable;
+use App\Services\TableQrCodeGenerator;
 use Illuminate\Database\Seeder;
 
 class RestaurantTableSeeder extends Seeder
@@ -27,16 +28,15 @@ class RestaurantTableSeeder extends Seeder
                 ]
             );
 
-            $qrCodeUrl = 'http://127.0.0.1:8000/order/table/' . $table->table_number;
-            $qrCodeApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrCodeUrl);
+            $qrCodeUrl = app(TableQrCodeGenerator::class)->generate($table);
 
             $table->update([
                 'capacity' => $tableData['capacity'],
                 'is_available' => $tableData['is_available'],
-                'qr_code' => $qrCodeApiUrl,
+                'qr_code' => $qrCodeUrl,
             ]);
 
-            echo "Meja {$table->table_number} - QR Code: {$qrCodeApiUrl}\n";
+            echo "Meja {$table->table_number} - QR Code: {$qrCodeUrl}\n";
         }
     }
 }

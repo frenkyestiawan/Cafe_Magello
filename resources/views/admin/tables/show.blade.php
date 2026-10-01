@@ -43,7 +43,7 @@
                                     <svg class="adm-icon" aria-hidden="true"><use href="#i-qr"/></svg>Perbarui QR Code
                                 </button>
                             </form>
-                            <a href="{{ $table->qr_code }}" download="qr_code_{{ $table->table_number }}.png" class="adm-btn">
+                            <a href="{{ $table->qr_code }}" download="qr_code_{{ $table->table_number }}.svg" class="adm-btn">
                                 <svg class="adm-icon" aria-hidden="true"><use href="#i-qr"/></svg>Download QR Code
                             </a>
                     </div>

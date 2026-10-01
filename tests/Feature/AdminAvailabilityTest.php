@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\AdminTableController;
 use App\Models\Category;
+use App\Models\RestaurantTable;
+use App\Services\TableQrCodeGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminAvailabilityTest extends TestCase
@@ -35,6 +38,8 @@ class AdminAvailabilityTest extends TestCase
 
     public function test_table_store_treats_zero_as_unavailable(): void
     {
+        Storage::fake('public');
+
         $request = Request::create('/admin/tables', 'POST', [
             'table_number' => '12',
             'capacity' => 4,
@@ -47,5 +52,18 @@ class AdminAvailabilityTest extends TestCase
             'table_number' => '12',
             'is_available' => 0,
         ]);
+
+        $table = RestaurantTable::where('table_number', '12')->firstOrFail();
+        $this->assertSame('/storage/qr-codes/table-' . $table->id . '.svg', $table->qr_code);
+        Storage::disk('public')->assertExists('qr-codes/table-' . $table->id . '.svg');
+    }
+
+    public function test_table_qr_destination_uses_configured_app_url(): void
+    {
+        config(['app.url' => 'https://cafe.example']);
+
+        $destinationUrl = app(TableQrCodeGenerator::class)->destinationUrl('12');
+
+        $this->assertSame('https://cafe.example/order/table/12', $destinationUrl);
     }
 }
