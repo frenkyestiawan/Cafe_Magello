@@ -2,61 +2,66 @@
 
 @section('title', 'Meja & QR Code')
 @section('page-title', 'Pengelolaan Meja & QR Code')
+@section('page-subtitle', 'Kelola kapasitas meja, ketersediaan, dan QR pemesanan.')
+@section('page-actions')
+    <a href="{{ route('admin.tables.create') }}" class="adm-btn">
+        <svg class="adm-icon" aria-hidden="true"><use href="#i-plus"/></svg>Tambah Meja
+    </a>
+@endsection
 
 @section('content')
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-lg font-semibold text-gray-800">Daftar Meja</h3>
-        <a href="{{ route('admin.tables.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            <i class="fas fa-plus mr-2"></i>Tambah Meja
-        </a>
+<section class="adm-card" aria-labelledby="table-list-title">
+    <div class="adm-card-head">
+        <h2 class="adm-card-title" id="table-list-title">Daftar Meja <span class="adm-badge">{{ $tables->total() }}</span></h2>
     </div>
-    
+
     @if($tables->count() > 0)
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <div class="adm-table-wrap">
+            <table class="adm-table adm-table--stack">
                 <thead>
-                    <tr class="bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Meja</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kapasitas</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    <tr>
+                        <th scope="col">No. Meja</th>
+                        <th scope="col">Kapasitas</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">QR Code</th>
+                        <th scope="col" class="is-actions">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @foreach($tables as $table)
                         <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ $table->table_number }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $table->capacity }} orang</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            <td data-label="No. Meja" class="is-strong">{{ $table->table_number }}</td>
+                            <td data-label="Kapasitas" class="is-muted">{{ $table->capacity }} orang</td>
+                            <td data-label="Status">
                                 @if($table->is_available)
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Tersedia</span>
+                                    <span class="adm-badge adm-badge--ok">Tersedia</span>
                                 @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Tidak Tersedia</span>
+                                    <span class="adm-badge adm-badge--err">Tidak Tersedia</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            <td data-label="QR Code">
                                 @if($table->qr_code)
-                                    <span class="text-green-600"><i class="fas fa-check-circle"></i> Ada</span>
+                                    <span class="adm-badge adm-badge--ok"><svg class="adm-icon" aria-hidden="true"><use href="#i-check"/></svg>Ada</span>
                                 @else
-                                    <span class="text-red-600"><i class="fas fa-times-circle"></i> Tidak Ada</span>
+                                    <span class="adm-badge adm-badge--err">Tidak Ada</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                <a href="{{ route('admin.tables.show', $table->id) }}" class="text-blue-600 hover:text-blue-900 mr-2">
-                                    <i class="fas fa-eye"></i>
+                            <td data-label="Aksi" class="is-actions">
+                                <div class="adm-row-actions">
+                                <a href="{{ route('admin.tables.show', $table->id) }}" class="adm-icon-btn" aria-label="Lihat meja {{ $table->table_number }}" title="Detail">
+                                    <svg class="adm-icon" aria-hidden="true"><use href="#i-eye"/></svg>
                                 </a>
-                                <a href="{{ route('admin.tables.edit', $table->id) }}" class="text-yellow-600 hover:text-yellow-900 mr-2">
-                                    <i class="fas fa-edit"></i>
+                                <a href="{{ route('admin.tables.edit', $table->id) }}" class="adm-icon-btn" aria-label="Edit meja {{ $table->table_number }}" title="Edit">
+                                    <svg class="adm-icon" aria-hidden="true"><use href="#i-edit"/></svg>
                                 </a>
-                                <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus meja ini?');">
+                                <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST" data-confirm="Meja {{ $table->table_number }} akan dihapus." data-confirm-title="Hapus meja?" data-confirm-ok="Hapus" data-confirm-danger>
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">
-                                        <i class="fas fa-trash"></i>
+                                    <button type="submit" class="adm-icon-btn" aria-label="Hapus meja {{ $table->table_number }}" title="Hapus">
+                                        <svg class="adm-icon" aria-hidden="true"><use href="#i-trash"/></svg>
                                     </button>
                                 </form>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -64,11 +69,13 @@
             </table>
         </div>
         
-        <div class="mt-4">
-            {{ $tables->links() }}
-        </div>
+        {{ $tables->links('admin.layouts.pagination') }}
     @else
-        <p class="text-gray-500 text-center py-4">Belum ada meja.</p>
+        <div class="adm-empty">
+            <svg class="adm-icon" aria-hidden="true"><use href="#i-grid"/></svg>
+            <strong>Belum ada meja.</strong>
+            <p>Tambahkan meja untuk mulai menerima pesanan dine-in.</p>
+        </div>
     @endif
-</div>
+</section>
 @endsection

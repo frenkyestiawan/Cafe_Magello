@@ -389,6 +389,14 @@ html { scroll-behavior: smooth; scroll-padding-top: calc(var(--adm-nav-h) + 16px
 .adm-order-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .adm-order-status .adm-select { flex: 1 1 180px; }
 .adm-order-total { color: var(--price); font-family: var(--adm-font-display); font-size: 28px; font-weight: 700; overflow-wrap: anywhere; }
+.adm-input-action { display: flex; align-items: center; gap: 8px; }
+.adm-input-action .adm-input { min-width: 0; }
+.adm-qr-panel { display: grid; justify-items: center; gap: 14px; text-align: center; }
+.adm-qr-image { display: block; width: min(260px, 100%); aspect-ratio: 1; object-fit: contain; border: 1px solid var(--border); border-radius: var(--adm-radius-sm); background: #fff; }
+.adm-qr-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.adm-code-block { display: block; margin-top: 10px; padding: 12px 14px; overflow-wrap: anywhere; border: 1px solid var(--border); border-radius: var(--adm-radius-sm); background: var(--bg-elev); color: var(--text); }
+.adm-order-history { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border-soft); }
+.adm-order-history:last-child { padding-bottom: 0; border-bottom: 0; }
 
 .adm-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
 .adm-help { margin-top: 6px; font-size: 12px; color: var(--muted); }
@@ -511,6 +519,8 @@ a.adm-page:hover { background: var(--surface-2); }
 
 @media (max-width: 560px) {
     .adm-variant-row { grid-template-columns: 1fr; }
+    .adm-qr-actions { width: 100%; }
+    .adm-qr-actions .adm-btn { flex: 1 1 100%; }
 }
 
 @media (max-width: 720px) {
