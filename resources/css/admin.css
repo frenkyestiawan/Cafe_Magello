@@ -348,20 +348,24 @@ html { scroll-behavior: smooth; scroll-padding-top: calc(var(--adm-nav-h) + 16px
     background: var(--accent); color: var(--accent-ink);
     transition: background-color .15s ease, opacity .15s ease, border-color .15s ease;
 }
-.adm-page-actions .adm-btn {
+.adm-body .adm-btn { color: var(--accent-ink); }
+.adm-page-actions .adm-btn:not(.adm-btn--ghost) {
     color: var(--accent-ink);
     font-weight: 700;
     border-color: color-mix(in srgb, var(--accent-ink) 55%, transparent);
     text-shadow: 0 1px 0 rgba(255, 255, 255, .25);
 }
 .adm-btn:hover { background: var(--accent-hover); }
-.adm-btn--ghost { background: transparent; color: var(--text); border-color: var(--border); }
+.adm-body .adm-btn--ghost { background: transparent; color: var(--text); border-color: var(--border); text-shadow: none; }
 .adm-btn--ghost:hover { background: var(--surface-2); }
-.adm-btn--danger { background: var(--err-bg); color: var(--err-text); border-color: var(--err-border); }
+.adm-body .adm-btn--danger { background: var(--err-bg); color: var(--err-text); border-color: var(--err-border); }
 .adm-btn--danger:hover { background: var(--err-bg); opacity: .85; }
 .adm-btn--sm { min-height: 32px; padding: 0 12px; font-size: 13px; }
 .adm-btn--block { width: 100%; }
-.adm-btn[disabled], .adm-btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.adm-body .adm-btn[disabled], .adm-body .adm-btn[aria-disabled="true"] {
+    background: var(--surface-2); color: var(--muted); border-color: var(--border);
+    opacity: 1; cursor: not-allowed; pointer-events: none; text-shadow: none;
+}
 .adm-btn.is-loading::after {
     content: ""; width: 14px; height: 14px; border-radius: 50%;
     border: 2px solid currentColor; border-right-color: transparent; animation: adm-spin .7s linear infinite;
@@ -495,7 +499,7 @@ dialog.adm-dialog p { color: var(--muted); font-size: 14px; }
 }
 a.adm-page:hover { background: var(--surface-2); }
 .adm-page.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.adm-page.is-disabled { opacity: .4; cursor: not-allowed; }
+.adm-page.is-disabled { background: var(--bg-elev); border-color: var(--border-soft); color: var(--muted); cursor: not-allowed; }
 
 /* ---------- 14. Empty state ---------- */
 .adm-empty { display: grid; justify-items: center; gap: 10px; padding: 44px 20px; text-align: center; color: var(--muted); }

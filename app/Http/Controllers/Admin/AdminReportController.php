@@ -3,35 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exports\ReportTransactionsExport;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminReportController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = $request->validate([
-            'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'payment_method' => ['nullable', 'in:cash,qris,transfer'],
-        ]);
-
-        $startDate = Carbon::parse($filters['start_date'] ?? Carbon::today()->toDateString())->startOfDay();
-        $endDate = Carbon::parse($filters['end_date'] ?? Carbon::today()->toDateString())->endOfDay();
-
-        $query = Order::with(['restaurantTable', 'orderDetails.menu', 'payment'])
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('payment_status', 'paid')
-            ->whereIn('status', [Order::STATUS_SUDAH_DIAMBI, 'Sudah Diambil']);
-
-        if (! empty($filters['payment_method'])) {
-            $query->whereHas('payment', function ($paymentQuery) use ($filters) {
-                $paymentQuery->where('payment_method', $filters['payment_method']);
-            });
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->get();
+        [$filters, $startDate, $endDate] = $this->validatedFilters($request);
+        $orders = $this->reportOrders($filters, $startDate, $endDate);
 
         $totalTransactions = $orders->count();
         $totalItemsSold = $orders->sum(function ($order) {
@@ -70,5 +53,48 @@ class AdminReportController extends Controller
             'startDate',
             'endDate'
         ));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        [$filters, $startDate, $endDate] = $this->validatedFilters($request);
+        $orders = $this->reportOrders($filters, $startDate, $endDate);
+        $filename = sprintf(
+            'laporan-transaksi-%s-sd-%s.xlsx',
+            $startDate->format('Ymd'),
+            $endDate->format('Ymd')
+        );
+
+        return Excel::download(new ReportTransactionsExport($orders), $filename);
+    }
+
+    private function validatedFilters(Request $request): array
+    {
+        $filters = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'payment_method' => ['nullable', 'in:cash,qris,transfer'],
+        ]);
+
+        $startDate = Carbon::parse($filters['start_date'] ?? Carbon::today()->toDateString())->startOfDay();
+        $endDate = Carbon::parse($filters['end_date'] ?? Carbon::today()->toDateString())->endOfDay();
+
+        return [$filters, $startDate, $endDate];
+    }
+
+    private function reportOrders(array $filters, Carbon $startDate, Carbon $endDate)
+    {
+        $query = Order::with(['restaurantTable', 'orderDetails.menu', 'payment'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('payment_status', 'paid')
+            ->whereIn('status', [Order::STATUS_SUDAH_DIAMBI, 'Sudah Diambil']);
+
+        if (! empty($filters['payment_method'])) {
+            $query->whereHas('payment', function ($paymentQuery) use ($filters) {
+                $paymentQuery->where('payment_method', $filters['payment_method']);
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
     }
 }

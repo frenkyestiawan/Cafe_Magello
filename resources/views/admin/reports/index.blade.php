@@ -4,6 +4,9 @@
 @section('page-title', 'Laporan Penjualan')
 @section('page-subtitle', 'Ringkasan transaksi ' . $startDate->format('d M Y') . ' sampai ' . $endDate->format('d M Y') . '.')
 @section('page-actions')
+    <a href="{{ route('admin.reports.export-excel', request()->query()) }}" class="adm-btn adm-no-print">
+        <svg class="adm-icon" aria-hidden="true"><use href="#i-download"/></svg>Ekspor Excel
+    </a>
     <button type="button" onclick="window.print()" class="adm-btn adm-btn--ghost adm-no-print">
         <svg class="adm-icon" aria-hidden="true"><use href="#i-printer"/></svg>Cetak
     </button>

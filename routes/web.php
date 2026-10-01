@@ -83,6 +83,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/tables/{id}/regenerate-qr', [AdminTableController::class, 'regenerateQrCode'])->name('tables.regenerate-qr');
         
         // Reports
+        Route::get('/reports/export/excel', [AdminReportController::class, 'exportExcel'])->name('reports.export-excel');
         Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
     });
 });
