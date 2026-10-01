@@ -2,77 +2,84 @@
 
 @section('title', 'Menu')
 @section('page-title', 'Pengelolaan Menu')
+@section('page-subtitle', 'Atur katalog menu dan ketersediaannya.')
+@section('page-actions')
+    <a href="{{ route('admin.menus.create') }}" class="adm-btn">
+        <svg class="adm-icon" aria-hidden="true"><use href="#i-plus"/></svg>
+        Tambah Menu
+    </a>
+@endsection
 
 @section('content')
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-lg font-semibold text-gray-800">Daftar Menu</h3>
-        <a href="{{ route('admin.menus.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            <i class="fas fa-plus mr-2"></i>Tambah Menu
-        </a>
+<section class="adm-card" aria-labelledby="menu-list-title">
+    <div class="adm-card-head">
+        <h2 class="adm-card-title" id="menu-list-title">Daftar Menu <span class="adm-badge">{{ $menus->total() }}</span></h2>
     </div>
-    
+
     @if($menus->count() > 0)
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <div class="adm-table-wrap">
+            <table class="adm-table adm-table--stack">
                 <thead>
                     <tr class="bg-gray-50">
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gambar</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Menu</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th scope="col">Gambar</th>
+                        <th scope="col">Nama Menu</th>
+                        <th scope="col">Kategori</th>
+                        <th scope="col">Harga</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="is-actions">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @foreach($menus as $menu)
                         <tr>
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td data-label="Gambar">
                                 @if($menu->image)
-                                    <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="w-12 h-12 object-cover rounded">
+                                    <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="adm-menu-thumb" loading="lazy">
                                 @else
-                                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                        <i class="fas fa-image text-gray-400"></i>
+                                    <div class="adm-menu-thumb adm-menu-thumb--empty" aria-label="Tidak ada gambar">
+                                        <svg class="adm-icon" aria-hidden="true"><use href="#i-inbox"/></svg>
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ $menu->name }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $menu->category->name ?? '-' }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($menu->price, 0, ',', '.') }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            <td data-label="Nama Menu" class="is-strong">{{ $menu->name }}</td>
+                            <td data-label="Kategori" class="is-muted">{{ $menu->category->name ?? '-' }}</td>
+                            <td data-label="Harga" class="is-muted">Rp {{ number_format($menu->price, 0, ',', '.') }}</td>
+                            <td data-label="Status">
                                 @if($menu->is_available)
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Tersedia</span>
+                                    <span class="adm-badge adm-badge--ok">Tersedia</span>
                                 @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Tidak Tersedia</span>
+                                    <span class="adm-badge adm-badge--err">Tidak Tersedia</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                <a href="{{ route('admin.menus.show', $menu->id) }}" class="text-blue-600 hover:text-blue-900 mr-2">
-                                    <i class="fas fa-eye"></i>
+                            <td data-label="Aksi" class="is-actions">
+                                <div class="adm-row-actions">
+                                <a href="{{ route('admin.menus.show', $menu->id) }}" class="adm-icon-btn" aria-label="Lihat {{ $menu->name }}" title="Lihat">
+                                    <svg class="adm-icon" aria-hidden="true"><use href="#i-eye"/></svg>
                                 </a>
-                                <a href="{{ route('admin.menus.edit', $menu->id) }}" class="text-yellow-600 hover:text-yellow-900 mr-2">
-                                    <i class="fas fa-edit"></i>
+                                <a href="{{ route('admin.menus.edit', $menu->id) }}" class="adm-icon-btn" aria-label="Edit {{ $menu->name }}" title="Edit">
+                                    <svg class="adm-icon" aria-hidden="true"><use href="#i-edit"/></svg>
                                 </a>
-                                <form action="{{ route('admin.menus.destroy', $menu->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus menu ini?');">
+                                <form action="{{ route('admin.menus.destroy', $menu->id) }}" method="POST" data-confirm="Menu {{ $menu->name }} akan dihapus." data-confirm-title="Hapus menu?" data-confirm-ok="Hapus" data-confirm-danger>
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">
-                                        <i class="fas fa-trash"></i>
+                                    <button type="submit" class="adm-icon-btn" aria-label="Hapus {{ $menu->name }}" title="Hapus">
+                                        <svg class="adm-icon" aria-hidden="true"><use href="#i-trash"/></svg>
                                     </button>
                                 </form>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-        
-        <div class="mt-4">
-            {{ $menus->links() }}
-        </div>
+        {{ $menus->links('admin.layouts.pagination') }}
     @else
-        <p class="text-gray-500 text-center py-4">Belum ada menu.</p>
+        <div class="adm-empty">
+            <svg class="adm-icon" aria-hidden="true"><use href="#i-inbox"/></svg>
+            <strong>Belum ada menu.</strong>
+            <p>Tambahkan menu untuk mulai mengisi katalog.</p>
+        </div>
     @endif
-</div>
+</section>
 @endsection

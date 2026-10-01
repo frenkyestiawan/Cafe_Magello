@@ -2,48 +2,55 @@
 
 @section('title', 'Detail Menu')
 @section('page-title', 'Detail Menu')
+@section('page-subtitle', 'Informasi lengkap menu dan status ketersediaannya.')
+@section('page-actions')
+    <a href="{{ route('admin.menus.edit', $menu->id) }}" class="adm-btn">
+        <svg class="adm-icon" aria-hidden="true"><use href="#i-edit"/></svg>Edit Menu
+    </a>
+    <a href="{{ route('admin.menus.index') }}" class="adm-btn adm-btn--ghost">
+        <svg class="adm-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Kembali
+    </a>
+@endsection
 
 @section('content')
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-lg font-semibold text-gray-800">Detail Menu</h3>
-        <div class="space-x-2">
-            <a href="{{ route('admin.menus.edit', $menu->id) }}" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
-                <i class="fas fa-edit mr-2"></i>Edit
-            </a>
-            <a href="{{ route('admin.menus.index') }}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                <i class="fas fa-arrow-left mr-2"></i>Kembali
-            </a>
-        </div>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<section class="adm-card">
+    <div class="adm-card-body adm-menu-detail">
         <div>
             @if($menu->image)
-                <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="w-full h-64 object-cover rounded-lg">
+                <div class="adm-menu-preview">
+                    <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}">
+                </div>
             @else
-                <div class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-image text-gray-400 text-4xl"></i>
+                <div class="adm-menu-preview" role="img" aria-label="Tidak ada gambar untuk {{ $menu->name }}">
+                    <svg class="adm-icon" aria-hidden="true"><use href="#i-inbox"/></svg>
                 </div>
             @endif
         </div>
-        
-        <div>
-            <h4 class="text-2xl font-bold text-gray-800 mb-2">{{ $menu->name }}</h4>
-            <p class="text-xl text-blue-600 font-semibold mb-4">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
-            
-            <div class="space-y-2">
-                <p class="text-gray-600"><strong>Kategori:</strong> {{ $menu->category->name ?? '-' }}</p>
-                <p class="text-gray-600"><strong>Status:</strong> 
+
+        <div class="adm-stack">
+            <div>
+                <h2>{{ $menu->name }}</h2>
+                <p class="adm-menu-price">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
+            </div>
+            <div>
+                <span class="adm-label">Kategori</span>
+                <p>{{ $menu->category->name ?? '-' }}</p>
+            </div>
+            <div>
+                <span class="adm-label">Status</span>
+                <p>
                     @if($menu->is_available)
-                        <span class="text-green-600">Tersedia</span>
+                        <span class="adm-badge adm-badge--ok">Tersedia</span>
                     @else
-                        <span class="text-red-600">Tidak Tersedia</span>
+                        <span class="adm-badge adm-badge--err">Tidak Tersedia</span>
                     @endif
                 </p>
-                <p class="text-gray-600"><strong>Deskripsi:</strong> {{ $menu->description ?? '-' }}</p>
+            </div>
+            <div>
+                <span class="adm-label">Deskripsi</span>
+                <p>{{ $menu->description ?: '-' }}</p>
             </div>
         </div>
     </div>
-</div>
+</section>
 @endsection

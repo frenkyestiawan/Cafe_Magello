@@ -2,98 +2,73 @@
 
 @section('title', 'Tambah Menu')
 @section('page-title', 'Tambah Menu')
+@section('page-subtitle', 'Tambahkan informasi menu, kategori, dan pilihan variannya.')
+@section('page-actions')
+    <a href="{{ route('admin.menus.index') }}" class="adm-btn adm-btn--ghost">
+        <svg class="adm-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+        Kembali
+    </a>
+@endsection
 
 @section('content')
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="mb-6">
-        <a href="{{ route('admin.menus.index') }}" class="text-blue-600 hover:text-blue-900">
-            <i class="fas fa-arrow-left mr-2"></i>Kembali ke Daftar Menu
-        </a>
-    </div>
-    
-    <form action="{{ route('admin.menus.store') }}" method="POST" enctype="multipart/form-data">
+<section class="adm-card">
+    <form action="{{ route('admin.menus.store') }}" method="POST" enctype="multipart/form-data" class="adm-card-body adm-form">
         @csrf
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="adm-form-grid">
             <div>
-                <div class="mb-4">
-                    <label for="name" class="block text-gray-700 font-medium mb-2">Nama Menu</label>
-                    <input type="text" id="name" name="name" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ old('name') }}">
-                    @error('name')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-                
-                <div class="mb-4">
-                    <label for="category_id" class="block text-gray-700 font-medium mb-2">Kategori</label>
-                    <select id="category_id" name="category_id" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Pilih Kategori</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('category_id')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Variant Menu</label>
-                    <div id="variant-list" class="space-y-3"></div>
-                    <button type="button" id="add-variant" class="mt-3 text-sm text-blue-600 hover:text-blue-800">+ Tambah variant</button>
-                    @error('variants')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                    @error('variants.*.name')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                    @error('variants.*.price')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-                
-                <div class="mb-4">
-                    <label for="image" class="block text-gray-700 font-medium mb-2">Foto Menu</label>
-                    <input type="file" id="image" name="image" accept="image/*"
-                           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('image')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                <label for="name" class="adm-label">Nama Menu</label>
+                <input type="text" id="name" name="name" class="adm-input {{ $errors->has('name') ? 'is-invalid' : '' }}" value="{{ old('name') }}" required>
+                @error('name') <p class="adm-error">{{ $message }}</p> @enderror
             </div>
-            
+
             <div>
-                <div class="mb-4">
-                    <label for="description" class="block text-gray-700 font-medium mb-2">Deskripsi</label>
-                    <textarea id="description" name="description" rows="4"
-                              class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('description') }}</textarea>
-                    @error('description')
-                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-                
-                <div class="mb-4">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="is_available" value="1" class="mr-2"
-                               {{ old('is_available', true) ? 'checked' : '' }}>
-                        <span class="text-gray-700">Tersedia</span>
-                    </label>
-                </div>
+                <label for="category_id" class="adm-label">Kategori</label>
+                <select id="category_id" name="category_id" class="adm-select {{ $errors->has('category_id') ? 'is-invalid' : '' }}" required>
+                    <option value="">Pilih kategori</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                @error('category_id') <p class="adm-error">{{ $message }}</p> @enderror
             </div>
+
+            <div class="is-full">
+                <span class="adm-label">Varian Menu</span>
+                <div id="variant-list" class="adm-variant-list"></div>
+                <button type="button" id="add-variant" class="adm-btn adm-btn--ghost adm-btn--sm">
+                    <svg class="adm-icon" aria-hidden="true"><use href="#i-plus"/></svg>Tambah varian
+                </button>
+                @error('variants') <p class="adm-error">{{ $message }}</p> @enderror
+                @error('variants.*.name') <p class="adm-error">{{ $message }}</p> @enderror
+                @error('variants.*.price') <p class="adm-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="image" class="adm-label">Foto Menu</label>
+                <input type="file" id="image" name="image" accept="image/*" class="adm-input {{ $errors->has('image') ? 'is-invalid' : '' }}">
+                @error('image') <p class="adm-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="description" class="adm-label">Deskripsi</label>
+                <textarea id="description" name="description" rows="4" class="adm-textarea">{{ old('description') }}</textarea>
+                @error('description') <p class="adm-error">{{ $message }}</p> @enderror
+            </div>
+
+            <label class="adm-check is-full">
+                <input type="checkbox" name="is_available" value="1" {{ old('is_available', true) ? 'checked' : '' }}>
+                Tersedia
+            </label>
         </div>
-        
-        <div class="mt-6">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                <i class="fas fa-save mr-2"></i>Simpan Menu
+
+        <div class="adm-form-actions">
+            <button type="submit" class="adm-btn">
+                <svg class="adm-icon" aria-hidden="true"><use href="#i-check"/></svg>Simpan Menu
             </button>
         </div>
     </form>
-</div>
+</section>
 
 <script>
     const variantNames = ['Small', 'Medium', 'Large'];
@@ -103,23 +78,23 @@
 
     function buildVariantRow(name = 'Small', price = 0, index = 0) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'flex flex-col md:flex-row md:items-end gap-3 rounded border border-gray-200 p-3';
+        wrapper.className = 'adm-variant-row';
         wrapper.innerHTML = `
-            <div class="flex-1">
-                <label class="block text-xs font-medium text-gray-600 mb-1">Nama Variant</label>
-                <select name="variants[${index}][name]" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div>
+                <label class="adm-label" for="variant-name-${index}">Nama Varian</label>
+                <select id="variant-name-${index}" name="variants[${index}][name]" class="adm-select">
                     ${variantNames.map(option => `<option value="${option}" ${option === name ? 'selected' : ''}>${option}</option>`).join('')}
                 </select>
             </div>
-            <div class="flex-1">
-                <label class="block text-xs font-medium text-gray-600 mb-1">Harga Variant</label>
-                <input type="number" name="variants[${index}][price]" min="0" step="1000" value="${price}" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div>
+                <label class="adm-label" for="variant-price-${index}">Harga Varian</label>
+                <input id="variant-price-${index}" type="number" name="variants[${index}][price]" min="0" step="1000" value="${price}" class="adm-input">
             </div>
-            <button type="button" class="remove-variant text-red-500 hover:text-red-700 px-2 py-2">Hapus</button>
+            <button type="button" class="remove-variant adm-btn adm-btn--danger adm-btn--sm">Hapus</button>
         `;
 
         wrapper.querySelector('.remove-variant').addEventListener('click', function () {
-            const rows = variantList.querySelectorAll('.flex.flex-col.md\:flex-row.md\:items-end.gap-3.rounded.border.border-gray-200.p-3');
+            const rows = variantList.querySelectorAll(':scope > .adm-variant-row');
             if (rows.length > 1) {
                 wrapper.remove();
             }
@@ -130,7 +105,7 @@
 
     function renderVariantRows() {
         variantList.innerHTML = '';
-        const existingRows = Array.from({ length: Math.max(1, document.querySelectorAll('#variant-list .rounded.border.border-gray-200').length || 1) });
+        const existingRows = Array.from({ length: 1 });
         existingRows.forEach((_, index) => {
             const name = variantNames[index] || 'Small';
             const row = buildVariantRow(name, 0, index);
